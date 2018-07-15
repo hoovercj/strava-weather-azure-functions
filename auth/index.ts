@@ -11,14 +11,14 @@ import {
 } from '../shared/function-utilities';
 
 export async function run(context: Context, req: HttpRequest) {
-    const code = req.query.code || (req.body && req.body.code);
+    const stravaCode = req.query.stravacode || (req.body && req.body.stravacode);
 
-    if (!code) {
-        return handleMissingParameter(context, 'code');
+    if (!stravaCode) {
+        return handleMissingParameter(context, 'stravacode');
     }
 
     try {
-        const token = await exchangeCodeForToken(code);
+        const token = await exchangeCodeForToken(stravaCode);
         context.res = {
             status: 200,
             body: token,
