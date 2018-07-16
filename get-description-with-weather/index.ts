@@ -10,6 +10,7 @@ import * as Strava from '../shared/strava-api';
 import {
     speedToString,
     tempToString,
+    humidityToString,
 } from '../shared/utilities';
 import {
     handleGenericError,
@@ -121,7 +122,7 @@ const getDescriptionFromWeather = (weather: WeatherSnapshot): string => {
         strings.push(`Felt Like: ${tempToString(weather.apparentTemperature)}`);
     }
 
-    strings.push(`Humidity: ${weather.humidity * 100}%`);
+    strings.push(`Humidity: ${humidityToString(weather.humidity)}`);
 
     if (weather.uvIndex >= 7) {
         strings.push(`UV Index: ${weather.uvIndex}`);
