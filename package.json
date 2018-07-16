@@ -1,7 +1,13 @@
 {
   "name": "strava-weather-azure-functions",
   "version": "0.0.1",
-  "description": "",
+  "private": true,
+  "description": "Serverless backend for an app which makes it quick and easy to add weather information to Strava activity descriptions",
+  "author": {
+    "name": "Cody Hoover",
+    "url": "https://www.github.com/hoovercj",
+    "email": "npm@codyhoover.com"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
@@ -9,7 +15,6 @@
     "run": "func host start",
     "postinstall": "npm run build"
   },
-  "author": "Cody Hoover",
   "license": "MIT",
   "dependencies": {
     "dotenv": "6.0.0",

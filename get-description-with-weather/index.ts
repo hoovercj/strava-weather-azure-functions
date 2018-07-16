@@ -50,7 +50,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             status: 200,
             body: description,
         };
-        return;
+        return Promise.resolve();
     } catch {
         return handleGenericError(context);
     }

@@ -19,7 +19,7 @@ export async function run(context: Context, req: HttpRequest) {
             status: 200,
             body: activities,
         };
-        return;
+        return Promise.resolve();
     } catch {
         return handleGenericError(context);
     }
