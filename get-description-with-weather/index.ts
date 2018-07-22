@@ -19,11 +19,12 @@ import {
 import {
     AuthToken,
     ActivityId,
+    PartitionKeys,
 } from '../shared/models';
 
 export async function run(context: Context, req: HttpRequest): Promise<void> {
     const stravaToken = req.query.token || (req.body && req.body.token);
-    const activityId = req.query.id || (req.body && req.body.id);
+    const activityId = context.bindingData.activityid;
     const darkSkyApiKey = getDarkSkyApiKey();
 
     if (!stravaToken) {
@@ -39,18 +40,50 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     }
 
     try {
+        context.bindings.outTableBinding = [];
+
+        const activityDetails = await getDetailedActivityForId(stravaToken, activityId)
+
+        let weatherDetails = context.bindings.activityWeather && JSON.parse(context.bindings.activityWeather.weather); 
+        if (!weatherDetails) {
+            weatherDetails = await getWeatherForDetailedActivity(activityDetails, darkSkyApiKey);
+            if (weatherDetails) {
+                context.bindings.outTableBinding.push({
+                    PartitionKey: PartitionKeys.ActivityWeather,
+                    RowKey: activityId,
+                    weather: JSON.stringify(weatherDetails), 
+                });
+            }
+        }
+
         const description = await getDescriptionWithWeatherForActivityId(stravaToken, activityId, darkSkyApiKey);
+
+        const successResponse = {
+            status: 200,
+            body: description,
+        }
 
         // If the method is post, attempt to edit the description in strava
         // If successful, or if the method is get, return the description in the body
         if (req.method === HttpMethod.Post) {
-            await postDescription(stravaToken, activityId, description);
-        }
+            const success = await postDescription(stravaToken, activityId, description);
+            if (success) {
+                const alreadyProcessed = !!context.bindings.processedActivity;
+                if (!alreadyProcessed) {
+                    context.bindings.outTableBinding.push({
+                        PartitionKey: PartitionKeys.ProcessedActivities,
+                        RowKey: activityId,
+                        userId: activityDetails.athlete.id,
+                    });
+                }
 
-        context.res = {
-            status: 200,
-            body: description,
-        };
+                context.res = successResponse;
+            } else {
+                return handleGenericError(context, 'Unable to update description');
+            }
+        } else {
+            context.res = successResponse;
+        }
         return Promise.resolve();
     } catch {
         return handleGenericError(context);

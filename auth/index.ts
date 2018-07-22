@@ -9,19 +9,40 @@ import {
     handleGenericError,
     handleMissingParameter
 } from '../shared/function-utilities';
+import { PartitionKeys } from '../shared/models';
+
+interface IStravaAuthenticationResponse {
+    access_token: string;
+    athlete: IUserInfo;
+}
+
+interface IUserInfo {
+    id: number;
+    username: string;
+    firstname: string;
+    lastname: string;
+    profile_medium: string;
+    profile: string;
+    email: string;
+}
 
 export async function run(context: Context, req: HttpRequest) {
     const stravaCode = req.query.stravacode || (req.body && req.body.stravacode);
-
     if (!stravaCode) {
         return handleMissingParameter(context, 'stravacode');
     }
 
     try {
-        const token = await exchangeCodeForToken(stravaCode);
+        const stravaResponse: IStravaAuthenticationResponse = JSON.parse(await exchangeCodeForToken(stravaCode));
+        context.bindings.outTableBinding = [];
+        context.bindings.outTableBinding.push({
+            PartitionKey: PartitionKeys.TokenToUser,
+            RowKey: stravaResponse.access_token,
+            userId: stravaResponse.athlete.id, 
+        });
         context.res = {
             status: 200,
-            body: token,
+            body: stravaResponse,
         };
         return Promise.resolve();
     } catch {

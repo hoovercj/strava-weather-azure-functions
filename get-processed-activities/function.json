@@ -2,14 +2,13 @@
   "disabled": false,
   "bindings": [
     {
-      "route": "description/{activityid}",
+      "route": "processedactivities/{userid}",
       "authLevel": "function",
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
       "methods": [
-        "get",
-        "post"
+        "get"
       ]
     },
     {
@@ -19,25 +18,19 @@
     },
     {
       "tableName": "StravaWeatherman",
-      "name": "activityWeather",
-      "type": "table",
-      "partitionKey": "activityWeather",
-      "rowKey": "{activityid}",
-      "direction": "in"
-    },
-    {
-      "tableName": "StravaWeatherman",
-      "name": "processedActivity",
+      "name": "processedActivities",
       "type": "table",
       "partitionKey": "processedActivities",
-      "rowKey": "{activityid}",
+      "filter": "userId eq {userid}",
       "direction": "in"
     },
     {
       "tableName": "StravaWeatherman",
-      "name": "outTableBinding",
+      "name": "userTokens",
       "type": "table",
-      "direction": "out"
+      "partitionKey": "tokenToUser",
+      "filter": "userId eq {userid}",
+      "direction": "in"
     }
   ]
 }

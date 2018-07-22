@@ -15,6 +15,12 @@
       "type": "http",
       "direction": "out",
       "name": "res"
+    },
+    {
+      "tableName": "StravaWeatherman",
+      "name": "outTableBinding",
+      "type": "table",
+      "direction": "out"
     }
   ]
 }
