@@ -23,7 +23,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     const entities: any[] = context.bindings.userTokens || [];
     let authorized = false;
     for (let i = 0; i < entities.length; i++) {
-        if (entities[i].userId === userId && entities[i].RowKey === stravaToken) {
+        if (entities[i].UserId === userId && entities[i].RowKey === stravaToken) {
             authorized = true;
             break;
         }

@@ -10,6 +10,7 @@ import {
     handleMissingParameter
 } from '../shared/function-utilities';
 import { PartitionKeys } from '../shared/models';
+import { DataProvider } from '../shared/data-provider';
 
 interface IStravaAuthenticationResponse {
     access_token: string;
@@ -34,12 +35,12 @@ export async function run(context: Context, req: HttpRequest) {
 
     try {
         const stravaResponse: IStravaAuthenticationResponse = JSON.parse(await exchangeCodeForToken(stravaCode));
-        context.bindings.outTableBinding = [];
-        context.bindings.outTableBinding.push({
-            PartitionKey: PartitionKeys.TokenToUser,
-            RowKey: stravaResponse.access_token,
-            userId: stravaResponse.athlete.id, 
-        });
+     
+        const storageService = new DataProvider();
+        await storageService.init();
+        
+        await storageService.storeUserIdForToken(stravaResponse.access_token, stravaResponse.athlete.id);
+
         context.res = {
             status: 200,
             body: stravaResponse,

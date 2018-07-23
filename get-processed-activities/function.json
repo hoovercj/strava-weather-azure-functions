@@ -21,7 +21,7 @@
       "name": "processedActivities",
       "type": "table",
       "partitionKey": "processedActivities",
-      "filter": "userId eq {userid}",
+      "filter": "UserId eq {userid}",
       "direction": "in"
     },
     {
@@ -29,7 +29,7 @@
       "name": "userTokens",
       "type": "table",
       "partitionKey": "tokenToUser",
-      "filter": "userId eq {userid}",
+      "filter": "UserId eq {userid}",
       "direction": "in"
     }
   ]
