@@ -56,7 +56,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             }
         }
 
-        const description = await getDescriptionWithWeatherForActivityId(stravaToken, activityId, darkSkyApiKey);
+        const description = getDescriptionWithWeatherForDetailedActivity(activityDetails, weatherDetails);
 
         const successResponse = {
             status: 200,
@@ -102,12 +102,10 @@ const postDescription = async (token: AuthToken, activityId: ActivityId, descrip
     }
 }
 
-const getDescriptionWithWeatherForActivityId = async (stravaToken: AuthToken, activityId: ActivityId, darkSkyApiKey: AuthToken) => {
-    const activityDetails = await getDetailedActivityForId(stravaToken, activityId)
-    if (!activityDetails) return;
-
-    const weatherDetails = await getWeatherForDetailedActivity(activityDetails, darkSkyApiKey)
-    if (!weatherDetails) return;
+const getDescriptionWithWeatherForDetailedActivity = (activityDetails: Strava.DetailedActivity, weatherDetails: WeatherSnapshot): string => {
+    if (!activityDetails || !weatherDetails) {
+        return null;
+    }
 
     const weatherDescription = getDescriptionFromWeather(weatherDetails);
 

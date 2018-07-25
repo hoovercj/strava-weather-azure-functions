@@ -1,13 +1,13 @@
 export const farenheitToCelcius = (temp: number): string => {
-    return getRoundedString((temp - 32) * (5 / 9), 2);
+    return getRoundedString((temp - 32) * (5 / 9), 0);
 }
 
 export const tempToString = (temp: number): string => {
-    return `${temp}° (${farenheitToCelcius(temp)}C)`;
+    return `${getRoundedString(temp, 0)}° (${farenheitToCelcius(temp)}C)`;
 }
 
 export const speedToString = (speed: number): string => {
-    return `${speed} mph (${getRoundedString(speed * 0.44704, 2)} m/s)`;
+    return `${getRoundedString(speed, 0)} mph (${getRoundedString(speed * 0.44704, 0)} m/s)`;
 }
 
 export const humidityToString = (humidity: number): string => {
