@@ -1,0 +1,37 @@
+{
+  "disabled": false,
+  "bindings": [
+    {
+      "route": "settings/{userid}",
+      "authLevel": "function",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": [
+        "get",
+        "post"
+      ]
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "res"
+    },
+    {
+      "tableName": "StravaWeatherman",
+      "name": "userSettings",
+      "type": "table",
+      "partitionKey": "userSettings",
+      "rowKey": "{userid}",
+      "direction": "in"
+    },
+    {
+      "tableName": "StravaWeatherman",
+      "name": "userTokens",
+      "type": "table",
+      "partitionKey": "tokenToUser",
+      "filter": "UserId eq {userid}",
+      "direction": "in"
+    }
+  ]
+}

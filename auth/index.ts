@@ -9,7 +9,6 @@ import {
     handleGenericError,
     handleMissingParameter
 } from '../shared/function-utilities';
-import { PartitionKeys } from '../shared/models';
 import { DataProvider } from '../shared/data-provider';
 
 interface IStravaAuthenticationResponse {
@@ -35,10 +34,10 @@ export async function run(context: Context, req: HttpRequest) {
 
     try {
         const stravaResponse: IStravaAuthenticationResponse = JSON.parse(await exchangeCodeForToken(stravaCode));
-     
+
         const storageService = new DataProvider();
         await storageService.init();
-        
+
         await storageService.storeUserIdForToken(stravaResponse.access_token, stravaResponse.athlete.id);
 
         context.res = {

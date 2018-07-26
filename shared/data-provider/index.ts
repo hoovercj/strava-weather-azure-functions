@@ -1,4 +1,4 @@
-import { AuthToken, UserId, ActivityId } from '../models';
+import { AuthToken, UserId, ActivityId, UserSettingsModel } from '../models';
 import {
     PartitionKeys,
     TokenToUserIdModel, TokenToUserIdEntity,
@@ -19,7 +19,6 @@ export class DataProvider {
     private storage: azure.TableService;
 
     public async init() {
-        console.log(`Init`);
         const credentials = process.env.AzureWebJobsStorage;
         this.storage = azure.createTableService(credentials);
         return new Promise<ErrorResultResponse<azure.TableService.TableResult>>((resolve, reject) => {
@@ -30,7 +29,6 @@ export class DataProvider {
     }
 
     public getUserIdForToken = async (token: AuthToken): Promise<UserId> => {
-        console.log(`getUserIdForToken: ${token}`);
         const response = await this.retrieveEntity<TokenToUserIdEntity>(PartitionKeys.TokenToUser, token);
 
         return response
@@ -39,7 +37,6 @@ export class DataProvider {
     }
 
     public getProcessedActivities = async (userId: UserId): Promise<ActivityId[]> => {
-        console.log(`getProcessedActivities: ${userId}`);
         const query = new azure.TableQuery()
             .where('UserId eq ?', userId)
             .and('PartitionKey eq ?', PartitionKeys.ProcessedActivities);
@@ -54,21 +51,22 @@ export class DataProvider {
     }
 
     public storeUserIdForToken = async (token: AuthToken, userId: UserId): Promise<void> => {
-        console.log(`storeUserIdForToken:\nuserId: ${userId}, token: ${token}`);
-
         const tokenToUserIdEntity = TokenToUserIdModel.toEntity(token, userId);
 
         await this.storeEntity(tokenToUserIdEntity)
     }
 
     public storeProcessedActivity = async (activityId: ActivityId, userId: UserId): Promise<void> => {
-        console.log(`storeProcessedActivity:\nuserId: ${userId}, activityId: ${activityId}`);
         const activityEntity = ProcessedActivityModel.toEntity(activityId, userId);
         await this.storeEntity(activityEntity);
     }
 
+    public storeUserSettings = async (userId: UserId, userSettings: any) => {
+        const userSettingsEntity = UserSettingsModel.toEntity(userId, userSettings)
+        return await this.storeEntity<any>(userSettingsEntity);
+    }
+
     private async storeEntity<T>(entity: T) {
-        console.log(`Storing Entity:\n${JSON.stringify(entity)}`);
         return new Promise<ErrorResultResponse<azure.TableService.EntityMetadata>>((resolve, reject) => {
             this.storage.insertOrReplaceEntity<T>(DataProvider.TABLE_NAME, entity, (error, result, response) => {
                 resolve({error, result, response});
@@ -77,7 +75,6 @@ export class DataProvider {
     }
 
     private async retrieveEntity<T>(partitionKey: PartitionKeys, id: string) {
-        console.log(`Retreiving Entity:\nKey: ${partitionKey}, Id: ${id}`);
         return new Promise<ErrorResultResponse<T>>((resolve, reject) => {
             this.storage.retrieveEntity<T>(DataProvider.TABLE_NAME, String(partitionKey), id, (error, result, response) => {
                 resolve({error, result, response});
@@ -86,7 +83,6 @@ export class DataProvider {
     }
 
     private async queryEntities<T>(query: azure.TableQuery, continuationToken?: azure.TableService.TableContinuationToken) {
-        console.log(`Query Entities ${(continuationToken && '(continued)') || ''}:\n${JSON.stringify(query.toQueryObject())}`);
         let result = await new Promise<ErrorResultResponse<azure.TableService.QueryEntitiesResult<T>>>((resolve, reject) => {
 
             this.storage.queryEntities<T>(DataProvider.TABLE_NAME, query, continuationToken, null, (error, result, response) => {
