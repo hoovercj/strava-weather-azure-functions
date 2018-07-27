@@ -1,4 +1,4 @@
-import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials';
+import { Context, HttpRequest } from 'azure-functions-ts-essentials';
 import {
     handleGenericError,
     handleMissingParameter,
@@ -10,11 +10,11 @@ import {
 } from '../shared/models';
 
 export async function run(context: Context, req: HttpRequest): Promise<void> {
-    const userId = context.bindingData.userid;    
+    const userId = context.bindingData.userid;
     if (!userId) {
         return handleMissingParameter(context, 'userid');
     }
-    
+
     const stravaToken = req.query.token || (req.body && req.body.token);
     if (!stravaToken) {
         return handleMissingParameter(context, 'token');

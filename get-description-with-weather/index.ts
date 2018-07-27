@@ -20,7 +20,9 @@ import {
     AuthToken,
     ActivityId,
     PartitionKeys,
+    WeatherUnits,
 } from '../shared/models';
+import { DataProvider } from '../shared/data-provider'
 
 export async function run(context: Context, req: HttpRequest): Promise<void> {
     const stravaToken = req.query.token || (req.body && req.body.token);
@@ -56,7 +58,11 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             }
         }
 
-        const description = getDescriptionWithWeatherForDetailedActivity(activityDetails, weatherDetails);
+        const dataProvider = new DataProvider();
+        dataProvider.init();
+        const userSettings = await dataProvider.getUserSettings(activityDetails.athlete.id);
+
+        const description = getDescriptionWithWeatherForDetailedActivity(activityDetails, weatherDetails, userSettings && userSettings.weatherUnits);
 
         const successResponse = {
             status: 200,
@@ -102,12 +108,16 @@ const postDescription = async (token: AuthToken, activityId: ActivityId, descrip
     }
 }
 
-const getDescriptionWithWeatherForDetailedActivity = (activityDetails: Strava.DetailedActivity, weatherDetails: WeatherSnapshot): string => {
+const getDescriptionWithWeatherForDetailedActivity = (activityDetails: Strava.DetailedActivity, weatherDetails: WeatherSnapshot, units: WeatherUnits): string => {
     if (!activityDetails || !weatherDetails) {
         return null;
     }
 
-    const weatherDescription = getDescriptionFromWeather(weatherDetails);
+    if (!units) {
+        units = WeatherUnits.Both;
+    }
+
+    const weatherDescription = getDescriptionFromWeather(weatherDetails, units);
 
     // If the comment already contains the weather information, don't add it again
     if (activityDetails.description && activityDetails.description.indexOf("Weather Summary") >= 0) {
@@ -143,14 +153,14 @@ const getWeatherForDetailedActivity = async (run: Strava.DetailedActivity, apiKe
     return getWeatherSnapshot(options);
 }
 
-const getDescriptionFromWeather = (weather: WeatherSnapshot): string => {
+const getDescriptionFromWeather = (weather: WeatherSnapshot, units: WeatherUnits): string => {
     const strings = [];
     strings.push(`Weather Summary: ${weather.summary}`);
-    strings.push(`Temperature: ${tempToString(weather.temperature)}`);
+    strings.push(`Temperature: ${tempToString(weather.temperature, units)}`);
 
     const heatIndexDiff = Math.abs(weather.apparentTemperature - weather.temperature);
     if (heatIndexDiff > 10) {
-        strings.push(`Felt Like: ${tempToString(weather.apparentTemperature)}`);
+        strings.push(`Felt Like: ${tempToString(weather.apparentTemperature, units)}`);
     }
 
     strings.push(`Humidity: ${humidityToString(weather.humidity)}`);
@@ -159,12 +169,12 @@ const getDescriptionFromWeather = (weather: WeatherSnapshot): string => {
         strings.push(`UV Index: ${weather.uvIndex}`);
     }
 
-    strings.push(`Wind Speed: ${speedToString(weather.windSpeed)}`);
+    strings.push(`Wind Speed: ${speedToString(weather.windSpeed, units)}`);
 
     // Does not have to be an absolute value
     const windGustDiff = weather.windSpeed - weather.windGust;
     if (windGustDiff > 5) {
-        strings.push(`Gusts up to: ${speedToString(weather.windGust)}`);
+        strings.push(`Gusts up to: ${speedToString(weather.windGust, units)}`);
     }
 
     return strings.join('\n');

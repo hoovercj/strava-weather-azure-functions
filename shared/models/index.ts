@@ -5,10 +5,27 @@ export type UserId = number;
 export type ActivityId = number;
 export type AuthToken = string;
 
+export interface IUserSettings {
+    distanceUnits: DistanceUnits;
+    weatherUnits: WeatherUnits;
+}
+
+export enum DistanceUnits {
+    Miles = 'Miles',
+    Kilometers = 'Kilometers',
+}
+
+export enum WeatherUnits {
+    Metric = 'Metric',
+    Imperial = 'Imperial',
+    Both = 'Both',
+}
+
 export enum PartitionKeys {
     ActivityWeather = 'activityWeather',
     ProcessedActivities = 'processedActivities',
     TokenToUser = 'tokenToUser',
+    UserSettings = 'userSettings',
 }
 
 export interface UserIdToTokenEntity {
@@ -27,6 +44,12 @@ export interface ProcessedActivityEntity {
     PartitionKey: TableUtilities.entityGenerator.EntityProperty<string>;
     RowKey: TableUtilities.entityGenerator.EntityProperty<string>;
     UserId: TableUtilities.entityGenerator.EntityProperty<number>;
+}
+
+export interface UserSettingsEntity {
+    PartitionKey: TableUtilities.entityGenerator.EntityProperty<string>;
+    RowKey: TableUtilities.entityGenerator.EntityProperty<string>;
+    UserSettings: TableUtilities.entityGenerator.EntityProperty<string>;
 }
 
 const entGen = TableUtilities.entityGenerator;
@@ -61,6 +84,23 @@ export class ProcessedActivityModel {
             PartitionKey: entGen.String(String(PartitionKeys.ProcessedActivities)),
             RowKey: entGen.String(String(activityId)),
             UserId: entGen.Int32(userId),
+        };
+    }
+}
+
+export class UserSettingsModel {
+    constructor(public userId: UserId, public userSettings: IUserSettings) {
+    }
+
+    public static fromEntity(entity: UserSettingsEntity): UserSettingsModel {
+        return new UserSettingsModel(Number(entity.RowKey._), JSON.parse(entity.UserSettings._));
+    }
+
+    public static toEntity(userId: UserId, userSettings: IUserSettings): UserSettingsEntity {
+        return {
+            PartitionKey: entGen.String(String(PartitionKeys.UserSettings)),
+            RowKey: entGen.String(String(userId)),
+            UserSettings: entGen.String(JSON.stringify(userSettings)),
         };
     }
 }
