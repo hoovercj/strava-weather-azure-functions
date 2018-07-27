@@ -1,4 +1,4 @@
-import { AuthToken, UserId, ActivityId, UserSettingsModel } from '../models';
+import { AuthToken, UserId, ActivityId, UserSettingsModel, IUserSettings, UserSettingsEntity } from '../models';
 import {
     PartitionKeys,
     TokenToUserIdModel, TokenToUserIdEntity,
@@ -36,6 +36,14 @@ export class DataProvider {
             && TokenToUserIdModel.fromEntity(response.result).userId;
     }
 
+    public getUserSettings = async (userId: UserId): Promise<IUserSettings> => {
+        const response = await this.retrieveEntity<UserSettingsEntity>(PartitionKeys.UserSettings, String(userId));
+
+        return response
+            && response.result
+            && UserSettingsModel.fromEntity(response.result).userSettings;
+    }
+
     public getProcessedActivities = async (userId: UserId): Promise<ActivityId[]> => {
         const query = new azure.TableQuery()
             .where('UserId eq ?', userId)
@@ -61,7 +69,7 @@ export class DataProvider {
         await this.storeEntity(activityEntity);
     }
 
-    public storeUserSettings = async (userId: UserId, userSettings: any) => {
+    public storeUserSettings = async (userId: UserId, userSettings: IUserSettings) => {
         const userSettingsEntity = UserSettingsModel.toEntity(userId, userSettings)
         return await this.storeEntity<any>(userSettingsEntity);
     }

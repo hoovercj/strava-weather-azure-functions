@@ -5,6 +5,22 @@ export type UserId = number;
 export type ActivityId = number;
 export type AuthToken = string;
 
+export interface IUserSettings {
+    distanceUnits: DistanceUnits;
+    weatherUnits: WeatherUnits;
+}
+
+export enum DistanceUnits {
+    Miles = 'Miles',
+    Kilometers = 'Kilometers',
+}
+
+export enum WeatherUnits {
+    Metric = 'Metric',
+    Imperial = 'Imperial',
+    Both = 'Both',
+}
+
 export enum PartitionKeys {
     ActivityWeather = 'activityWeather',
     ProcessedActivities = 'processedActivities',
@@ -73,14 +89,14 @@ export class ProcessedActivityModel {
 }
 
 export class UserSettingsModel {
-    constructor(public userId: UserId, public userSettings: any) {
+    constructor(public userId: UserId, public userSettings: IUserSettings) {
     }
 
     public static fromEntity(entity: UserSettingsEntity): UserSettingsModel {
         return new UserSettingsModel(Number(entity.RowKey._), JSON.parse(entity.UserSettings._));
     }
 
-    public static toEntity(userId: UserId, userSettings: any): UserSettingsEntity {
+    public static toEntity(userId: UserId, userSettings: IUserSettings): UserSettingsEntity {
         return {
             PartitionKey: entGen.String(String(PartitionKeys.UserSettings)),
             RowKey: entGen.String(String(userId)),

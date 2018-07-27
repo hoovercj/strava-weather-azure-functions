@@ -10,6 +10,7 @@ import {
     AuthToken,
     ActivityId,
     UserSettingsEntity,
+    IUserSettings,
 } from '../shared/models';
 import { DataProvider } from '../shared/data-provider';
 
@@ -48,7 +49,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     }
 
     try {
-        const userSettings = req.body;
+        const userSettings = req.body as IUserSettings;
 
         if (!userSettings) {
             return handleMissingParameter(context, 'settings');
