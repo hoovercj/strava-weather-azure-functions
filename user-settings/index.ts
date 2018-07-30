@@ -11,6 +11,8 @@ import {
     ActivityId,
     UserSettingsEntity,
     IUserSettings,
+    UserSettingsModel,
+    UserSettingsBindingEntity,
 } from '../shared/models';
 import { DataProvider } from '../shared/data-provider';
 
@@ -40,10 +42,13 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         return handleGenericError(context, 'Must provide a valid auth token');
     }
 
+    const settingsEntity: UserSettingsBindingEntity = context.bindings.userSettings;
+    const settings: UserSettingsModel | undefined = settingsEntity ? UserSettingsModel.fromBindingEntity(settingsEntity) : undefined;
+
     if (context.req.method === HttpMethod.Get) {
         context.res = {
             status: 200,
-            body: (context.bindings.userSettings as UserSettingsEntity).UserSettings,
+            body: settings && settings.userSettings,
         }
         return Promise.resolve();
     }

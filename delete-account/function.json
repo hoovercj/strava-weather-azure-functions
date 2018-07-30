@@ -1,0 +1,44 @@
+{
+  "disabled": false,
+  "bindings": [
+    {
+      "route": "deleteaccount/{userid}",
+      "authLevel": "function",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": [
+        "get"
+      ]
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "res"
+    },
+    {
+      "tableName": "StravaWeatherman",
+      "name": "processedActivities",
+      "type": "table",
+      "partitionKey": "processedActivities",
+      "filter": "UserId eq {userid}",
+      "direction": "in"
+    },
+    {
+      "tableName": "StravaWeatherman",
+      "name": "userTokens",
+      "type": "table",
+      "partitionKey": "tokenToUser",
+      "filter": "UserId eq {userid}",
+      "direction": "in"
+    },
+    {
+      "tableName": "StravaWeatherman",
+      "name": "userSettings",
+      "type": "table",
+      "partitionKey": "userSettings",
+      "rowKey": "{userid}",
+      "direction": "in"
+    }
+  ]
+}

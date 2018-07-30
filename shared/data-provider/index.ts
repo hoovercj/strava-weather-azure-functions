@@ -1,4 +1,12 @@
-import { AuthToken, UserId, ActivityId, UserSettingsModel, IUserSettings, UserSettingsEntity } from '../models';
+import {
+    ActivityId,
+    ActivityWeatherEntity,
+    AuthToken,
+    IUserSettings,
+    UserId,
+    UserSettingsEntity,
+    UserSettingsModel,
+} from '../models';
 import {
     PartitionKeys,
     TokenToUserIdModel, TokenToUserIdEntity,
@@ -10,6 +18,11 @@ import * as azure from 'azure-storage';
 export interface ErrorResultResponse<T> {
     error: Error;
     result: T;
+    response: azure.ServiceResponse;
+}
+
+export interface ErrorOrResponse {
+    error: Error;
     response: azure.ServiceResponse;
 }
 
@@ -26,6 +39,13 @@ export class DataProvider {
                 resolve({error, result, response});
             });
         });
+    }
+
+    public getWeatherForActivityId = async (activityId: ActivityId): Promise<ActivityWeatherEntity> => {
+        const response = await this.retrieveEntity<ActivityWeatherEntity>(PartitionKeys.ActivityWeather, String(activityId));
+
+        return response
+            && response.result;
     }
 
     public getUserIdForToken = async (token: AuthToken): Promise<UserId> => {
@@ -72,6 +92,14 @@ export class DataProvider {
     public storeUserSettings = async (userId: UserId, userSettings: IUserSettings) => {
         const userSettingsEntity = UserSettingsModel.toEntity(userId, userSettings)
         return await this.storeEntity<any>(userSettingsEntity);
+    }
+
+    public async deleteEntity<T>(entity: T) {
+        return new Promise<ErrorOrResponse>((resolve, reject) => {
+            this.storage.deleteEntity<T>(DataProvider.TABLE_NAME, entity, (error, response) => {
+                resolve({error, response});
+            });
+        });
     }
 
     private async storeEntity<T>(entity: T) {
