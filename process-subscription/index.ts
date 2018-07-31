@@ -45,7 +45,7 @@ export async function run(context: Context, req: HttpRequest) {
 };
 
 const verifySubscription = async (context: Context, req: HttpRequest) => {
-    context.log.info('Verify Subscription', req.body || req.params);
+    context.log.info('Verify Subscription', req);
 
     const verifyToken = req.params['hub.verify_token'] || (req.body && req.body.hub && req.body.hub.verify_token);
     const challenge = req.params['hub.challenge'] || (req.body && req.body.hub && req.body.hub.challenge);
