@@ -41,8 +41,10 @@ const createSubscription = async (context: Context) => {
 
     const url = getUrlWithParams(stravaBaseUrl, params);
 
+    context.log('Creating subscription', url);
+
     try {
-        return request.post(url);
+        await request.post(url);
     } catch (error) {
         context.log.error(error)
         throw error;
