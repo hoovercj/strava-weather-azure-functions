@@ -16,7 +16,7 @@ export const getStravaClientSecret = (): string => {
 }
 
 export const getHostedUrl = (): string => {
-    return process.env.STRAVA_WEBHOOKS_VERIFY_TOKEN;
+    return 'https://strava-weather.azurewebsites.net/api/';
 }
 
 export const getStravaWebhooksToken = (): string => {
