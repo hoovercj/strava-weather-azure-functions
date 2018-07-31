@@ -46,5 +46,5 @@ export const getUrlWithParams = (url, params) => {
         paramsString += `&${key}=${params[key]}`
     }
 
-    return encodeURI(`${url}${paramsString}`);
+    return `${url}${encodeURIComponent(paramsString)}`;
 }
