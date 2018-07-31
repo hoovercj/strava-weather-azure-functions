@@ -35,7 +35,8 @@ const createSubscription = async (context: Context) => {
     const params = {
         client_id: getStravaClientId(),
         client_secret: getStravaClientSecret(),
-        callback_url: `${getHostedUrl()}/subscription?code=${getStravaWebhooksToken()}`,
+        // callback_url: `${getHostedUrl()}/subscription?code=${getStravaWebhooksToken()}`,
+        callback_url: `${getHostedUrl()}/subscription`,
         verify_token: getStravaWebhooksVerifyToken(),
     }
 
