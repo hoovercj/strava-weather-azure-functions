@@ -14,3 +14,15 @@ export const getStravaClientId = (): string => {
 export const getStravaClientSecret = (): string => {
     return process.env.STRAVA_CLIENT_SECRET;
 }
+
+export const getHostedUrl = (): string => {
+    return process.env.STRAVA_WEBHOOKS_VERIFY_TOKEN;
+}
+
+export const getStravaWebhooksToken = (): string => {
+    return process.env.STRAVA_WEBHOOKS_TOKEN;
+}
+
+export const getStravaWebhooksVerifyToken = (): string => {
+    return process.env.STRAVA_WEBHOOKS_VERIFY_TOKEN;
+}

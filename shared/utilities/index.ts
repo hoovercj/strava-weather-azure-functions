@@ -39,3 +39,12 @@ export const humidityToString = (humidity: number): string => {
 export function getRoundedString(value: number | string, decimals: number): string {
     return Number(Math.round(Number(value + 'e' + decimals)) + 'e-' + decimals).toFixed(decimals);
 }
+
+export const getUrlWithParams = (url, params) => {
+    let paramsString = '?';
+    for (let key in params) {
+        paramsString += `&${key}=${params[key]}`
+    }
+
+    return `${url}${paramsString}`;
+}

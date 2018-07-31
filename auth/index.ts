@@ -10,6 +10,7 @@ import {
     handleMissingParameter
 } from '../shared/function-utilities';
 import { DataProvider } from '../shared/data-provider';
+import { getUrlWithParams } from '../shared/utilities';
 
 interface IStravaAuthenticationResponse {
     access_token: string;
@@ -49,15 +50,6 @@ export async function run(context: Context, req: HttpRequest) {
         return handleGenericError(context);
     }
 };
-
-const getUrlWithParams = (url, params) => {
-    let paramsString = '?';
-    for (let key in params) {
-        paramsString += `&${key}=${params[key]}`
-    }
-
-    return `${url}${paramsString}`;
-}
 
 const exchangeCodeForToken = async (code) => {
     const stravaBaseUrl = 'https://www.strava.com/oauth/token';
