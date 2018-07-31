@@ -43,8 +43,8 @@ export function getRoundedString(value: number | string, decimals: number): stri
 export const getUrlWithParams = (url, params) => {
     let paramsString = '?';
     for (let key in params) {
-        paramsString += `&${key}=${params[key]}`
+        paramsString += `&${key}=${encodeURIComponent(params[key])}`
     }
 
-    return `${url}${encodeURIComponent(paramsString)}`;
+    return `${url}${paramsString}}`;
 }
