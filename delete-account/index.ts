@@ -5,13 +5,10 @@ import {
     handleMissingParameter,
 } from '../shared/function-utilities';
 import {
-    ProcessedActivityEntity,
     ProcessedActivityModel,
-    UserSettingsEntity,
     ProcessedActivityBindingEntity,
 } from '../shared/models';
 import { DataProvider } from '../shared/data-provider';
-import { METHODS } from 'http';
 
 export async function run(context: Context, req: HttpRequest): Promise<void> {
     const userId = context.bindingData.userid;

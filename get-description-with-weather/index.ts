@@ -46,14 +46,14 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
 
         const activityDetails = await getDetailedActivityForId(stravaToken, activityId)
 
-        let weatherDetails = context.bindings.activityWeather && JSON.parse(context.bindings.activityWeather.weather);
+        let weatherDetails = context.bindings.activityWeather && JSON.parse(context.bindings.activityWeather.Weather);
         if (!weatherDetails) {
             weatherDetails = await getWeatherForDetailedActivity(activityDetails, darkSkyApiKey);
             if (weatherDetails) {
                 context.bindings.outTableBinding.push({
                     PartitionKey: PartitionKeys.ActivityWeather,
                     RowKey: activityId,
-                    weather: JSON.stringify(weatherDetails),
+                    Weather: JSON.stringify(weatherDetails),
                 });
             }
         }
