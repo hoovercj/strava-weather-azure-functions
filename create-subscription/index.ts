@@ -12,12 +12,13 @@ import {
     handleGenericError,
 } from '../shared/function-utilities';
 import { getUrlWithParams } from '../shared/utilities';
+import { isContext } from 'vm';
 
 
 export async function run(context: Context, req: HttpRequest) {
 
     try {
-        const stravaResponse: any = await createSubscription();
+        const stravaResponse: any = await createSubscription(context);
 
         context.res = {
             status: 200,
@@ -29,7 +30,7 @@ export async function run(context: Context, req: HttpRequest) {
     }
 };
 
-const createSubscription = async () => {
+const createSubscription = async (context: Context) => {
     const stravaBaseUrl = 'https://api.strava.com/api/v3/push_subscriptions';
     const params = {
         client_id: getStravaClientId(),
@@ -43,7 +44,7 @@ const createSubscription = async () => {
     try {
         return request.post(url);
     } catch (error) {
-        // TODO: logging
+        context.log.error(error)
         throw error;
     }
 }

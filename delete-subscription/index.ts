@@ -12,7 +12,7 @@ import {
 export async function run(context: Context, req: HttpRequest) {
 
     try {
-        const stravaResponse: any = await deleteSubscription(context.bindingData.id);
+        const stravaResponse: any = await deleteSubscription(context, context.bindingData.id);
 
         context.res = {
             status: 200,
@@ -24,7 +24,9 @@ export async function run(context: Context, req: HttpRequest) {
     }
 };
 
-const deleteSubscription = async (id: string) => {
+const deleteSubscription = async (context: Context, id: string) => {
+    context.log.info(`Deleting subscription id: ${id}`);
+
     const url = `https://api.strava.com/api/v3/push_subscriptions/${id}`;
     const params = {
         client_id: getStravaClientId(),
@@ -34,6 +36,7 @@ const deleteSubscription = async (id: string) => {
     try {
         return request.delete(url, params)
     } catch (error) {
+        context.log.error(error);
         // TODO: logging
         throw error;
     }

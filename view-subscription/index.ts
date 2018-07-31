@@ -4,9 +4,6 @@ import { Context, HttpRequest } from 'azure-functions-ts-essentials';
 import {
     getStravaClientId,
     getStravaClientSecret,
-    getHostedUrl,
-    getStravaWebhooksVerifyToken,
-    getStravaWebhooksToken
 } from '../shared/env';
 import {
     handleGenericError,
@@ -17,7 +14,7 @@ import { getUrlWithParams } from '../shared/utilities';
 export async function run(context: Context, req: HttpRequest) {
 
     try {
-        const stravaResponse: any = await createSubscription();
+        const stravaResponse: any = await getSubscriptions(context);
 
         context.res = {
             status: 200,
@@ -29,7 +26,7 @@ export async function run(context: Context, req: HttpRequest) {
     }
 };
 
-const createSubscription = async () => {
+const getSubscriptions = async (context: Context) => {
     const stravaBaseUrl = 'https://api.strava.com/api/v3/push_subscriptions';
     const params = {
         client_id: getStravaClientId(),
@@ -41,7 +38,7 @@ const createSubscription = async () => {
     try {
         return request.get(url);
     } catch (error) {
-        // TODO: logging
+        context.log.error(error);
         throw error;
     }
 }
