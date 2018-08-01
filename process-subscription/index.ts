@@ -51,7 +51,7 @@ const verifySubscription = async (context: Context, req: HttpRequest) => {
     const challenge = req.query['hub.challenge'] || req.query.hub.challenge;
 
     if (verifyToken !== getStravaWebhooksVerifyToken()) {
-        return handleGenericError(context, 'Verify token was incorrect');
+        return handleGenericError(context, `Verify token was incorrect. Expected ${getStravaWebhooksVerifyToken()}. Received ${verifyToken}`);
     }
 
     if (!challenge) {
