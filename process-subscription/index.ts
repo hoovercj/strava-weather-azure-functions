@@ -58,11 +58,13 @@ const verifySubscription = async (context: Context, req: HttpRequest) => {
         context.log.warn('Challenge was empty');
     }
 
+    const echo = JSON.stringify({
+        ['hub.challenge']: challenge,
+    });
+
     context.res = {
         status: 200,
-        body: {
-            ['hub.challenge']: challenge,
-        }
+        body: echo,
     }
 
     return Promise.resolve();
