@@ -62,10 +62,14 @@ const verifySubscription = async (context: Context, req: HttpRequest) => {
         ['hub.challenge']: challenge,
     });
 
+    context.log('Echoing challenge', echo);
+
     context.res = {
         status: 200,
         body: echo,
     }
+
+
 
     return Promise.resolve();
 }
