@@ -2,7 +2,7 @@
   "disabled": false,
   "bindings": [
     {
-      "route": "subscription/view",
+      "route": "viewsubscription",
       "authLevel": "function",
       "type": "httpTrigger",
       "direction": "in",

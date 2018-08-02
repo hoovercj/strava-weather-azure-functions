@@ -12,7 +12,7 @@ import { getUrlWithParams } from '../shared/utilities';
 
 
 export async function run(context: Context, req: HttpRequest) {
-
+    context.log('Run');
     try {
         const stravaResponse: any = await getSubscriptions(context);
 
@@ -35,7 +35,7 @@ const getSubscriptions = async (context: Context) => {
 
     const url = getUrlWithParams(stravaBaseUrl, params);
 
-    context.log.verbose(`Get Subscriptions`, url);
+    context.log(`Get Subscriptions`, url);
 
     try {
         return request.get(url);
