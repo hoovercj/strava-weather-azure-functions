@@ -1,4 +1,3 @@
-import * as request from 'request-promise-native';
 import { Context, HttpRequest } from 'azure-functions-ts-essentials';
 
 import {
@@ -9,10 +8,10 @@ import {
     handleGenericError,
 } from '../shared/function-utilities';
 import { getUrlWithParams } from '../shared/utilities';
+import { request } from '../shared/request';
 
 
 export async function run(context: Context, req: HttpRequest) {
-    context.log('Run');
     try {
         const stravaResponse: any = await getSubscriptions(context);
 
@@ -21,7 +20,8 @@ export async function run(context: Context, req: HttpRequest) {
             body: stravaResponse,
         };
         return Promise.resolve();
-    } catch {
+    } catch (error) {
+        context.log.error(error)
         return handleGenericError(context);
     }
 };
@@ -33,14 +33,5 @@ const getSubscriptions = async (context: Context) => {
         client_secret: getStravaClientSecret(),
     }
 
-    const url = getUrlWithParams(stravaBaseUrl, params);
-
-    context.log(`Get Subscriptions`, url);
-
-    try {
-        return request.get(url);
-    } catch (error) {
-        context.log.error(error);
-        throw error;
-    }
+    return request(context, stravaBaseUrl, params);
 }

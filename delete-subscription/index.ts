@@ -34,10 +34,10 @@ const deleteSubscription = async (context: Context, id: string) => {
     }
 
     try {
+        context.log.info(`Request`, url);
         return request.delete(url, params)
     } catch (error) {
         context.log.error(error);
-        // TODO: logging
         throw error;
     }
 }
