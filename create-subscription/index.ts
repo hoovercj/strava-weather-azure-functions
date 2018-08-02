@@ -9,11 +9,9 @@ import {
 import {
     handleGenericError,
 } from '../shared/function-utilities';
-import { request } from '../shared/request';
-
+import * as request from 'request-promise-native';
 
 export async function run(context: Context, req: HttpRequest) {
-
     try {
         const stravaResponse: any = await createSubscription(context);
 
@@ -22,28 +20,15 @@ export async function run(context: Context, req: HttpRequest) {
             body: stravaResponse,
         };
         return Promise.resolve();
-    } catch {
+    } catch (error) {
+        context.log.error(error)
         return handleGenericError(context);
     }
 };
 
 const createSubscription = async (context: Context) => {
     const stravaBaseUrl = 'https://api.strava.com/api/v3/push_subscriptions';
-    const params = {
-        client_id: getStravaClientId(),
-        client_secret: getStravaClientSecret(),
-        // TODO: get auth code back into URL
-        // callback_url: `${getHostedUrl()}/subscription?code=${getStravaWebhooksToken()}`,
-        callback_url: `${getHostedUrl()}/subscription/process`,
-        verify_token: getStravaWebhooksVerifyToken(),
-    }
+    const url = `${stravaBaseUrl}?client_id=${getStravaClientId()}&client_secret=${getStravaClientSecret()}&verify_token=${getStravaWebhooksVerifyToken()}&callback_url=${getHostedUrl()}/subscription/process`;
 
-    context.log('Creating subscription');
-
-    try {
-        await request(context, stravaBaseUrl, params, HttpMethod.Post);
-    } catch (error) {
-        context.log.error(error)
-        throw error;
-    }
+    return request.post(url);
 }

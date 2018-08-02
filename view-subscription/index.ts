@@ -1,4 +1,5 @@
 import { Context, HttpRequest } from 'azure-functions-ts-essentials';
+import * as request from 'request-promise-native';
 
 import {
     getStravaClientId,
@@ -7,7 +8,7 @@ import {
 import {
     handleGenericError,
 } from '../shared/function-utilities';
-import { request } from '../shared/request';
+import { getUrlWithParams } from '../shared/utilities';
 
 
 export async function run(context: Context, req: HttpRequest) {
@@ -32,5 +33,7 @@ const getSubscriptions = async (context: Context) => {
         client_secret: getStravaClientSecret(),
     }
 
-    return request(context, stravaBaseUrl, params);
+    const url = getUrlWithParams(stravaBaseUrl, params);
+
+    return request.get(url);
 }

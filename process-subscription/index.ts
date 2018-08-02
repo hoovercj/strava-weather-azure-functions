@@ -45,13 +45,11 @@ export async function run(context: Context, req: HttpRequest) {
 };
 
 const verifySubscription = async (context: Context, req: HttpRequest) => {
-    context.log('Verify subscription', req);
-
     const verifyToken = req.query['hub.verify_token'] || req.query.hub.verify_token;
     const challenge = req.query['hub.challenge'] || req.query.hub.challenge;
 
     if (verifyToken !== getStravaWebhooksVerifyToken()) {
-        return handleGenericError(context, `Verify token was incorrect. Expected ${getStravaWebhooksVerifyToken()}. Received ${verifyToken}`);
+        return handleGenericError(context, `Verify token was incorrect.`);
     }
 
     if (!challenge) {
@@ -68,8 +66,6 @@ const verifySubscription = async (context: Context, req: HttpRequest) => {
         status: 200,
         body: echo,
     }
-
-
 
     return Promise.resolve();
 }

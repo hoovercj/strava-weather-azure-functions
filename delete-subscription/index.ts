@@ -1,5 +1,5 @@
 import * as request from 'request-promise-native';
-import { Context, HttpRequest } from 'azure-functions-ts-essentials';
+import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials';
 
 import {
     getStravaClientId,
@@ -10,34 +10,35 @@ import {
 } from '../shared/function-utilities';
 
 export async function run(context: Context, req: HttpRequest) {
+    const id = context.bindingData.id;
+
+    context.log.info(`Deleting subscription id: ${id}`);
 
     try {
-        const stravaResponse: any = await deleteSubscription(context, context.bindingData.id);
+        const stravaResponse: any = await deleteSubscription(context, id);
 
         context.res = {
             status: 200,
             body: stravaResponse,
         };
         return Promise.resolve();
-    } catch {
+    } catch (error) {
+        context.log.error(error);
         return handleGenericError(context);
     }
 };
 
 const deleteSubscription = async (context: Context, id: string) => {
-    context.log.info(`Deleting subscription id: ${id}`);
 
     const url = `https://api.strava.com/api/v3/push_subscriptions/${id}`;
     const params = {
         client_id: getStravaClientId(),
         client_secret: getStravaClientSecret(),
-    }
+    };
 
-    try {
-        context.log.info(`Request`, url);
-        return request.delete(url, params)
-    } catch (error) {
-        context.log.error(error);
-        throw error;
-    }
+    return request.default({
+        uri: url,
+        method: HttpMethod.Delete,
+        formData: params,
+    });
 }
