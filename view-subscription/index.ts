@@ -35,6 +35,8 @@ const getSubscriptions = async (context: Context) => {
 
     const url = getUrlWithParams(stravaBaseUrl, params);
 
+    context.log.verbose(`Get Subscriptions`, url);
+
     try {
         return request.get(url);
     } catch (error) {
