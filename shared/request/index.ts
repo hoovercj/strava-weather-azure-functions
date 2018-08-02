@@ -4,9 +4,12 @@ import { getUrlWithParams } from "../utilities";
 
 export const request = (context: Context, url: string, params: any, method: HttpMethod = HttpMethod.Get) => {
 
+    context.log(`${method} ${url}`);
+
     const urlWithParams = getUrlWithParams(url, params);
 
-    context.log('Request', url);
-
-    return _request.get(url);
+    return _request.default({
+        method,
+        uri: urlWithParams,
+    });
 }

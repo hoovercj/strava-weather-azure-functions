@@ -7,7 +7,6 @@ import {
 import {
     handleGenericError,
 } from '../shared/function-utilities';
-import { getUrlWithParams } from '../shared/utilities';
 import { request } from '../shared/request';
 
 
