@@ -7,34 +7,6 @@ import {
     handleGenericError,
 } from '../shared/function-utilities';
 
-type AspectType = 'create' | 'update' | 'delete';
-
-interface DeauthorizationEvent extends BaseSubscriptionEvent {
-    object_type: 'athlete',
-    updates: {
-        'authorized': 'false',
-    }
-}
-
-interface ActivityEvent extends BaseSubscriptionEvent {
-    object_type: 'activity',
-    updates: {
-        title?: string,
-        type?: string,
-        private?: 'true' | 'false'
-    }
-}
-
-interface BaseSubscriptionEvent {
-    aspect_type: AspectType,
-    event_time: number,
-    object_id: number,
-    owner_id: number,
-    subscription_id: number,
-}
-
-type SubscriptionEvent = ActivityEvent | DeauthorizationEvent;
-
 export async function run(context: Context, req: HttpRequest) {
 
     if (req.method === HttpMethod.Get) {
