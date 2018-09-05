@@ -67,7 +67,7 @@ const verifySubscription = async (context: Context, req: HttpRequest) => {
         body: echo,
     }
 
-    return Promise.resolve();
+    return context.done();
 }
 
 const processEvent = async (context: Context, req: HttpRequest) => {
@@ -77,5 +77,5 @@ const processEvent = async (context: Context, req: HttpRequest) => {
         status: 200,
         body: undefined,
     };
-    return Promise.resolve();
+    return context.done();
 }

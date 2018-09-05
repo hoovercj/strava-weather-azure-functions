@@ -90,7 +90,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         } else {
             context.res = successResponse;
         }
-        return Promise.resolve();
+        return context.done();
     } catch {
         return handleGenericError(context);
     }

@@ -50,7 +50,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             status: 200,
             body: settings && settings.userSettings,
         }
-        return Promise.resolve();
+        return context.done();
     }
 
     try {
@@ -70,7 +70,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             status: 200,
             body: userSettings,
         }
-        return Promise.resolve();
+        return context.done();
 
     } catch {
         return handleGenericError(context, 'Unable to update settings');
