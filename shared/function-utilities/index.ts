@@ -1,15 +1,13 @@
 import { Context } from 'azure-functions-ts-essentials';
 
-export const handleMissingParameter = (context: Context, parameter: string): Promise<void> => {
+export const handleMissingParameter = (context: Context, parameter: string): void => {
     context.res = {
         status: 400,
         body: `Missing required parameter "${parameter}"`,
     }
-
-    return Promise.resolve();
 }
 
-export const handleGenericError = (context: Context, message: string = ''): Promise<void> => {
+export const handleGenericError = (context: Context, message: string = ''): void => {
     if (message) {
         context.log.error(message);
     }
@@ -18,6 +16,4 @@ export const handleGenericError = (context: Context, message: string = ''): Prom
         status: 400,
         body: `Something went wrong. ${message}`.trim(),
     }
-
-    return Promise.resolve();
 }
