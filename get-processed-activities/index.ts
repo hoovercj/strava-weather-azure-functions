@@ -41,4 +41,6 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         status: 200,
         body: processedActivities,
     };
+
+    context.done();
 };

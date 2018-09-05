@@ -5,4 +5,6 @@ export async function run(context: Context, req: HttpRequest) {
         status: 200,
         body: '',
     };
+
+    context.done();
 };
