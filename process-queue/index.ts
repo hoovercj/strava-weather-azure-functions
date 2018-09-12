@@ -90,6 +90,7 @@ const handleAthleteEvent = async (context: Context, event: AthleteEvent) => {
 const handleActivityEvent = async (context: Context, event: ActivityEvent) => {
     if (event.aspect_type !== 'create') {
         context.log(`Ignoring event. Event type was not 'create'`);
+        return;
     }
 
     const userId: UserId = event.owner_id;
