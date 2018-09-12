@@ -3,11 +3,6 @@ import {
     handleGenericError,
     handleMissingParameter,
 } from '../shared/function-utilities';
-import {
-    AuthToken,
-    ActivityId,
-    PartitionKeys,
-} from '../shared/models';
 
 export async function run(context: Context, req: HttpRequest): Promise<void> {
     const userId = context.bindingData.userid;

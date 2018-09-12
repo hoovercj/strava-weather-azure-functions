@@ -56,6 +56,21 @@ export class DataProvider {
             && TokenToUserIdModel.fromEntity(response.result).userId;
     }
 
+    public getTokensForUserId = async (userId: UserId): Promise<AuthToken[]> => {
+        const query = new azure.TableQuery()
+            .where('UserId eq ?', userId)
+            .and('PartitionKey eq ?', PartitionKeys.TokenToUser);
+
+        const response = await this.queryEntities<TokenToUserIdEntity>(query);
+
+        return response
+            && response.result
+            && response.result.entries
+            && response.result.entries
+                .map(TokenToUserIdModel.fromEntity)
+                .map(model => model.token);
+    }
+
     public getUserSettings = async (userId: UserId): Promise<IUserSettings> => {
         const response = await this.retrieveEntity<UserSettingsEntity>(PartitionKeys.UserSettings, String(userId));
 

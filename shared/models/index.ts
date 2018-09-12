@@ -9,6 +9,7 @@ export type AuthToken = string;
 export interface IUserSettings {
     distanceUnits: DistanceUnits;
     weatherUnits: WeatherUnits;
+    autoUpdate: boolean;
 }
 
 export enum DistanceUnits {
@@ -33,12 +34,6 @@ export interface UserIdToTokenBindingEntity {
     PartitionKey: string;
     RowKey: string;
     Token: string;
-}
-
-export interface UserIdToTokenEntity {
-    PartitionKey: TableUtilities.entityGenerator.EntityProperty<string>;
-    RowKey: TableUtilities.entityGenerator.EntityProperty<string>;
-    Token: TableUtilities.entityGenerator.EntityProperty<string>;
 }
 
 export interface TokenToUserIdBindingEntity {

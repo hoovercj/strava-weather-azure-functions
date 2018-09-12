@@ -10,6 +10,8 @@ import {
 } from '../shared/models';
 import { DataProvider } from '../shared/data-provider';
 
+export const FUNCTION_NAME = 'deleteaccount';
+
 export async function run(context: Context, req: HttpRequest): Promise<void> {
     const userId = context.bindingData.userid;
     if (!userId) {
