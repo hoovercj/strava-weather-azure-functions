@@ -45,12 +45,18 @@ type SubscriptionEvent = ActivityEvent | AthleteEvent;
 export async function run(context: Context) {
     const event: SubscriptionEvent = context.bindings.queueItem;
 
-    if (isAthleteEvent(event)) {
-        await handleAthleteEvent(context, event);
-    } else if (isActivityEvent(event)) {
-        await handleActivityEvent(context, event);
-    } else {
-        context.log.warn(`Ignoring unknown event type: ${event && event!.object_type}`);
+    try {
+
+        if (isAthleteEvent(event)) {
+            await handleAthleteEvent(context, event);
+        } else if (isActivityEvent(event)) {
+            await handleActivityEvent(context, event);
+        } else {
+            context.log.warn(`Ignoring unknown event type: ${event && event!.object_type}`);
+        }
+    } catch (e) {
+        context.done();
+        throw e;
     }
 
     context.done();
@@ -82,6 +88,10 @@ const handleAthleteEvent = async (context: Context, event: AthleteEvent) => {
 }
 
 const handleActivityEvent = async (context: Context, event: ActivityEvent) => {
+    if (event.aspect_type !== 'create') {
+        context.log(`Ignoring event. Event type was not 'create'`);
+    }
+
     const userId: UserId = event.owner_id;
     const activityId: ActivityId = event.object_id;
 
