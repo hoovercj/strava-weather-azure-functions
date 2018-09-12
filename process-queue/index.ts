@@ -95,19 +95,28 @@ const handleActivityEvent = async (context: Context, event: ActivityEvent) => {
     const userId: UserId = event.owner_id;
     const activityId: ActivityId = event.object_id;
 
+    context.log(`Processing activity ${activityId} for user ${userId}`);
+
     const dataProvider = new DataProvider();
     dataProvider.init();
 
+    context.log('Fetching user settings...')
     const userSettings = await dataProvider.getUserSettings(userId);
+    context.log('Fetched user settings.')
 
     if (!userSettings || !userSettings.autoUpdate) {
         context.log(`Ignoring event. User ${userId} does not have AutoUpdate enabled`);
         return;
+    } else {
+        context.log(`User has enabled AutoUpdate`);
     }
 
+    context.log('Fetching user tokens...')
     const tokens: AuthToken[] = await dataProvider.getTokensForUserId(userId)
-    if (tokens.length > 0) {
+    context.log('Fetched user tokens.')
+    if (tokens && tokens.length > 0) {
         const baseUrl = `${getHostedUrl()}/${getDescriptionFunctionName}/${activityId}`;
+        context.log('Request: ' + baseUrl);
         const token = tokens[0];
         const url = `${baseUrl}?token=${token}`;
         return request.post(url);
