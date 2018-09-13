@@ -173,10 +173,9 @@ const getDescriptionFromWeather = (weather: WeatherSnapshot, units: WeatherUnits
     }
 
     const windSpeedString = speedToString(weather.windSpeed, units);
-    const bearingDirection = weather.windBearing ? bearingToString(weather.windBearing) : '';
-    const bearingString = bearingDirection ? `(${bearingDirection})` : '';
-
-    strings.push(`Wind Speed: ${windSpeedString} ${bearingString}`.trim());
+    const bearingString = weather.windBearing ? bearingToString(weather.windBearing) : '';
+    const windStringContent = `${bearingString} ${windSpeedString}`.trim();
+    strings.push(`Wind Speed: ${windStringContent}`);
 
     // Does not have to be an absolute value
     const windGustDiff = weather.windSpeed - weather.windGust;
