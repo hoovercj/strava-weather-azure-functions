@@ -12,6 +12,7 @@ export interface WeatherSnapshot {
     apparentTemperature: number;
     windSpeed: number;
     windGust: number;
+    windBearing?: number;
     humidity: number;
     uvIndex: number;
 }

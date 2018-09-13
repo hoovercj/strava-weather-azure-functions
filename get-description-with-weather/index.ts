@@ -11,6 +11,7 @@ import {
     speedToString,
     tempToString,
     humidityToString,
+    bearingToString,
 } from '../shared/utilities';
 import {
     handleGenericError,
@@ -171,7 +172,11 @@ const getDescriptionFromWeather = (weather: WeatherSnapshot, units: WeatherUnits
         strings.push(`UV Index: ${weather.uvIndex}`);
     }
 
-    strings.push(`Wind Speed: ${speedToString(weather.windSpeed, units)}`);
+    const windSpeedString = speedToString(weather.windSpeed, units);
+    const bearingDirection = weather.windBearing ? bearingToString(weather.windBearing) : '';
+    const bearingString = bearingDirection ? `(${bearingDirection})` : '';
+
+    strings.push(`Wind Speed: ${windSpeedString} ${bearingString}`.trim());
 
     // Does not have to be an absolute value
     const windGustDiff = weather.windSpeed - weather.windGust;
