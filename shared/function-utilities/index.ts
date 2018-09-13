@@ -1,9 +1,13 @@
 import { Context } from 'azure-functions-ts-essentials';
 
 export const handleMissingParameter = (context: Context, parameter: string): void => {
+    const message = `Missing required parameter "${parameter}"`;
+
+    context.log.error(message);
+
     context.res = {
         status: 400,
-        body: `Missing required parameter "${parameter}"`,
+        body: message,
     }
 
     context.done();

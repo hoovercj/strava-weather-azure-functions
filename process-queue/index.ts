@@ -1,4 +1,4 @@
-import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials';
+import { Context } from 'azure-functions-ts-essentials';
 import * as request from 'request-promise-native';
 
 import {
@@ -80,7 +80,7 @@ const handleAthleteEvent = async (context: Context, event: AthleteEvent) => {
                 context.log('Request: ' + baseUrl);
                 const token = tokens[0];
                 const url = `${baseUrl}?token=${token}&code=${getBackendCode()}`;
-                return request.post(url);
+                return request.delete(url);
             } else {
                 context.log.error(`Ignoring event because application found no valid tokens for user ${userId}`);
             }
