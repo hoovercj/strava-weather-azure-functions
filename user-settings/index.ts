@@ -1,5 +1,4 @@
 import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials';
-import { getDarkSkyApiKey } from '../shared/env';
 
 import * as Strava from '../shared/strava-api';
 import {
@@ -9,13 +8,11 @@ import {
 import {
     AuthToken,
     ActivityId,
-    UserSettingsEntity,
     IUserSettings,
     UserSettingsModel,
     UserSettingsBindingEntity,
 } from '../shared/models';
 import { DataProvider } from '../shared/data-provider';
-
 
 export async function run(context: Context, req: HttpRequest): Promise<void> {
     const stravaToken = req.query.token || (req.body && req.body.token);
@@ -60,15 +57,15 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             return handleMissingParameter(context, 'settings');
         }
 
-        // TODO: update settings
+        const mergedSettings: IUserSettings = Object.assign({}, settings && settings.userSettings, userSettings)
+
         const storageService = new DataProvider();
         await storageService.init();
-
-        await storageService.storeUserSettings(userId, userSettings);
+        await storageService.storeUserSettings(userId, mergedSettings);
 
         context.res = {
             status: 200,
-            body: userSettings,
+            body: mergedSettings,
         }
         return context.done();
 

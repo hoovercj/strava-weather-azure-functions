@@ -1,0 +1,11 @@
+{
+    "disabled": false,
+    "bindings": [
+      {
+        "type": "queueTrigger",
+        "direction": "in",
+        "name": "queueItem",
+        "queueName": "subscription-events"
+      }
+    ]
+  }

@@ -24,6 +24,8 @@ import {
 } from '../shared/models';
 import { DataProvider } from '../shared/data-provider'
 
+export const FUNCTION_NAME = 'description';
+
 export async function run(context: Context, req: HttpRequest): Promise<void> {
     const stravaToken = req.query.token || (req.body && req.body.token);
     const activityId = context.bindingData.activityid;
