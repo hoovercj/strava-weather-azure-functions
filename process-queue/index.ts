@@ -2,7 +2,7 @@ import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials'
 import * as request from 'request-promise-native';
 
 import {
-    getHostedUrl,
+    getHostedUrl, getBackendCode,
 } from '../shared/env';
 import {
     handleGenericError,
@@ -72,9 +72,9 @@ const handleAthleteEvent = async (context: Context, event: AthleteEvent) => {
             const userId: UserId = event.owner_id;
             const tokens: AuthToken[] = await dataProvider.getTokensForUserId(userId)
             if (tokens.length > 0) {
-                const baseUrl = `${getHostedUrl()}/${deleteAccountFunctionName}`;
+                const baseUrl = `${getHostedUrl()}/${deleteAccountFunctionName}}`;
                 const token = tokens[0];
-                const url = `${baseUrl}?token=${token}`;
+                const url = `${baseUrl}?token=${token}&code=${getBackendCode()}`;
                 return request.post(url);
             } else {
                 context.log.error(`Ignoring event because application found no valid tokens for user ${userId}`);
@@ -119,7 +119,7 @@ const handleActivityEvent = async (context: Context, event: ActivityEvent) => {
         const baseUrl = `${getHostedUrl()}/${getDescriptionFunctionName}/${activityId}`;
         context.log('Request: ' + baseUrl);
         const token = tokens[0];
-        const url = `${baseUrl}?token=${token}`;
+        const url = `${baseUrl}?token=${token}&code=${getBackendCode()}`;
         return request.post(url);
     } else {
         context.log.error(`Ignoring event because application found no valid tokens for user ${userId}`);

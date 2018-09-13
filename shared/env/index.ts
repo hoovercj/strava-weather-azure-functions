@@ -19,6 +19,10 @@ export const getHostedUrl = (): string => {
     return `https://${process.env.WEBSITE_HOSTNAME}/api`;
 }
 
+export const getBackendCode = (): string => {
+    return process.env.FUNCTIONS_DEFAULT_KEY;
+}
+
 export const getStravaWebhooksToken = (): string => {
     return process.env.STRAVA_WEBHOOKS_TOKEN;
 }
