@@ -36,18 +36,21 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         return handleGenericError(context, 'Must provide a valid auth token');
     }
 
+    context.log(`Deauthorizing user ${userId}...`);
     const deauthorizeUrl = `https://www.strava.com/oauth/deauthorize?access_token=${stravaToken}`;
     await request.post(deauthorizeUrl);
+    context.log('User deauthorized');
 
-    // TODO: Once webhooks work, this should be handled
-    // automatically by the webhooks processing code
     const dataProvider = new DataProvider();
     dataProvider.init();
 
+    context.log(`Deleting ${tokenEntities && tokenEntities.length} tokens...`);
     await deleteEntities(dataProvider, tokenEntities);
+    context.log(`Deleting user settings...`);
     await deleteEntities(dataProvider, context.bindings.userSettings);
 
-    const processedActivityEntities = context.bindings.processedActivities as ProcessedActivityBindingEntity[];
+    const processedActivityEntities = context.bindings.processedActivities as ProcessedActivityBindingEntity[] || [];
+    context.log(`Deleting ${processedActivityEntities && processedActivityEntities.length} processed activities...`)
     for (let i = 0; i < processedActivityEntities.length; i++) {
 
         const activityEntity = processedActivityEntities[i];
@@ -59,6 +62,8 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             // TODO: logging
         }
     }
+
+    context.log('Deleted all entities.');
 
     context.res = {
         status: 200,

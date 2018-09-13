@@ -66,13 +66,18 @@ const handleAthleteEvent = async (context: Context, event: AthleteEvent) => {
     context.log('Handle Athlete Event');
     if (event.updates && !isNullOrUndefined(event.updates.authorized)) {
         if (event.updates.authorized === false || event.updates.authorized === 'false') {
+            const userId: UserId = event.owner_id;
+            context.log(`Processing athlete event for user ${userId}`);
+
             const dataProvider = new DataProvider();
             dataProvider.init();
 
-            const userId: UserId = event.owner_id;
-            const tokens: AuthToken[] = await dataProvider.getTokensForUserId(userId)
-            if (tokens.length > 0) {
-                const baseUrl = `${getHostedUrl()}/${deleteAccountFunctionName}}`;
+            context.log('Fetching user tokens...');
+            const tokens: AuthToken[] = await dataProvider.getTokensForUserId(userId);
+            context.log(`Fetched ${tokens && tokens.length || 0} user tokens.`);
+            if (tokens && tokens.length > 0) {
+                const baseUrl = `${getHostedUrl()}/${deleteAccountFunctionName}/${userId}`;
+                context.log('Request: ' + baseUrl);
                 const token = tokens[0];
                 const url = `${baseUrl}?token=${token}&code=${getBackendCode()}`;
                 return request.post(url);
@@ -101,9 +106,9 @@ const handleActivityEvent = async (context: Context, event: ActivityEvent) => {
     const dataProvider = new DataProvider();
     dataProvider.init();
 
-    context.log('Fetching user settings...')
-    const userSettings = await dataProvider.getUserSettings(userId);
-    context.log('Fetched user settings.')
+    context.log('Fetching user settings...');
+    const userSettings = await dataProvider.getUserSettings(userId);;
+    context.log('Fetched user settings.');
 
     if (!userSettings || !userSettings.autoUpdate) {
         context.log(`Ignoring event. User ${userId} does not have AutoUpdate enabled`);
@@ -114,7 +119,7 @@ const handleActivityEvent = async (context: Context, event: ActivityEvent) => {
 
     context.log('Fetching user tokens...')
     const tokens: AuthToken[] = await dataProvider.getTokensForUserId(userId)
-    context.log('Fetched user tokens.')
+    context.log(`Fetched ${tokens && tokens.length || 0} user tokens.`);
     if (tokens && tokens.length > 0) {
         const baseUrl = `${getHostedUrl()}/${getDescriptionFunctionName}/${activityId}`;
         context.log('Request: ' + baseUrl);
