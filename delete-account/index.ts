@@ -38,8 +38,12 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
 
     context.log(`Deauthorizing user ${userId}...`);
     const deauthorizeUrl = `https://www.strava.com/oauth/deauthorize?access_token=${stravaToken}`;
-    await request.post(deauthorizeUrl);
-    context.log('User deauthorized');
+    try {
+        await request.post(deauthorizeUrl);
+        context.log('User deauthorized');
+    } catch (e) {
+        context.log.error(`Problem deauthorizing user. User may have already been deauthorized.`);
+    }
 
     const dataProvider = new DataProvider();
     dataProvider.init();
