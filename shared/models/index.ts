@@ -6,11 +6,8 @@ export type UserId = number;
 export type ActivityId = number;
 export type AuthToken = string;
 
-export interface IUserSettings {
-    distanceUnits: DistanceUnits;
-    weatherUnits: WeatherUnits;
-    autoUpdate: boolean;
-}
+type WeatherSnapshotKeys = keyof WeatherSnapshot;
+export type WeatherFieldSettings = {[key in WeatherSnapshotKeys]?: boolean};
 
 export enum DistanceUnits {
     Miles = 'Miles',
@@ -21,6 +18,32 @@ export enum WeatherUnits {
     Metric = 'Metric',
     Imperial = 'Imperial',
     Both = 'Both',
+}
+
+export interface IUserSettings {
+    distanceUnits: DistanceUnits;
+    weatherUnits: WeatherUnits;
+    autoUpdate: boolean;
+    weatherFields: WeatherFieldSettings;
+}
+
+export const DEFAULT_USER_SETTINGS: IUserSettings = {
+    distanceUnits: DistanceUnits.Miles,
+    autoUpdate: false,
+    weatherUnits: WeatherUnits.Both,
+    weatherFields: {
+        summary: true,
+        temperature: true,
+        apparentTemperature: true,
+        precipIntensity: true,
+        precipProbability: true,
+        precipType: true,
+        humidity: true,
+        uvIndex: true,
+        windBearing: true,
+        windGust: true,
+        windSpeed: true,
+    }
 }
 
 export enum PartitionKeys {

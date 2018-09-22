@@ -1,12 +1,9 @@
 import { WeatherUnits } from "../models";
+import { WeatherSnapshot } from "../darksky-api";
 
-export const farenheitToCelcius = (temp: number): string => {
-    return getRoundedString((temp - 32) * (5 / 9), 0);
-}
-
-export const tempToString = (temp: number, weatherUnits: WeatherUnits): string => {
-    const imperial = `${getRoundedString(temp, 0)}°`;
-    const metric = `${farenheitToCelcius(temp)}C`;
+export const tempToString = (degreesFarenhit: number, weatherUnits: WeatherUnits): string => {
+    const imperial = `${getRoundedString(degreesFarenhit, 0)}°`;
+    const metric = `${farenheitToCelcius(degreesFarenhit)}C`;
 
     switch (weatherUnits) {
         case WeatherUnits.Imperial:
@@ -14,13 +11,13 @@ export const tempToString = (temp: number, weatherUnits: WeatherUnits): string =
         case WeatherUnits.Metric:
             return metric;
         default:
-            return `${imperial} (${metric})`;
+            return toImperialAndMetricString(imperial, metric);
     }
 }
 
-export const speedToString = (speed: number, weatherUnits: WeatherUnits): string => {
-    const imperial = `${getRoundedString(speed, 0)} mph`;
-    const metric = `${getRoundedString(speed * 0.44704, 0)} m/s`;
+export const speedToString = (mph: number, weatherUnits: WeatherUnits): string => {
+    const imperial = `${getRoundedString(mph, 0)} mph`;
+    const metric = `${getRoundedString(mph * 0.44704, 0)} m/s`;
 
     switch (weatherUnits) {
         case WeatherUnits.Imperial:
@@ -28,12 +25,34 @@ export const speedToString = (speed: number, weatherUnits: WeatherUnits): string
         case WeatherUnits.Metric:
             return metric;
         default:
-            return `${imperial} (${metric})`;
+            return toImperialAndMetricString(imperial, metric);
     }
 }
 
-export const humidityToString = (humidity: number): string => {
-    return `${getRoundedString(humidity * 100, 0)}%`;
+export const rainIntensityToString = (inchesPerHour: number): string => {
+    if (inchesPerHour < 0.098) {
+        return 'light';
+    } else if (inchesPerHour < 0.3) {
+        return 'moderate';
+    } else if (inchesPerHour < 2) {
+        return 'heavy';
+    } else {
+        return 'violent';
+    }
+}
+
+export const visibilityToSnowIntensityString = (miles: number): string => {
+    if (miles > .62) {
+        return 'light';
+    } else if (miles > 0.31) {
+        return 'moderate';
+    } else {
+        return 'heavy';
+    }
+}
+
+export const percentToString = (percentage: number): string => {
+    return `${getRoundedString(percentage * 100, 0)}%`;
 }
 
 export const bearingToString = (bearing: number): string => {
@@ -56,6 +75,52 @@ export const bearingToString = (bearing: number): string => {
     } else {
         return '';
     }
+}
+
+export const pressureToString = (millibars: number, weatherUnits: WeatherUnits): string => {
+    const imperial = `${millibarsToInchesMercury(millibars)} in`;
+    const metric = `${getRoundedString(millibars, 1)} mb`;
+
+    switch(weatherUnits) {
+        case WeatherUnits.Imperial:
+            return imperial;
+        case WeatherUnits.Metric:
+            return metric;
+        default:
+            return toImperialAndMetricString(imperial, metric);
+    }
+}
+
+export const visibilityToString = (miles: number, weatherUnits: WeatherUnits): string => {
+    let imperial = `${miles} mi`;
+    let metric = `${milesToKm(miles)} km`;
+
+    if (miles === 10) {
+        imperial = `+${imperial}`;
+        metric = `+${metric}`;
+    }
+
+    return toImperialAndMetricString(imperial, metric);
+}
+
+export const ozoneToString = (dobsons: number): string => {
+    return String(dobsons);
+}
+
+export const toImperialAndMetricString = (imperial: string, metric: string): string => {
+    return `${imperial} (${metric})`;
+}
+
+export const milesToKm = (miles: number): string => {
+    return getRoundedString(miles * 1.60934, 2);
+}
+
+export const farenheitToCelcius = (degreesFarenheit: number): string => {
+    return getRoundedString((degreesFarenheit - 32) * (5 / 9), 0);
+}
+
+export const millibarsToInchesMercury = (millibars: number): string => {
+    return getRoundedString(millibars * 0.02953, 2);
 }
 
 export function getRoundedString(value: number | string, decimals: number): string {

@@ -14,7 +14,15 @@ export interface WeatherSnapshot {
     windGust: number;
     windBearing?: number;
     humidity: number;
+    dewPoint: number;
+    pressure: number;
+    cloudCover: number;
+    visibility: number;
+    ozone: number;
     uvIndex: number;
+    precipProbability: number;
+    precipIntensity: number;
+    precipType: 'rain' | 'snow' | 'sleet';
 }
 
 export interface DarkskyApiOptions {
