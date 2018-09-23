@@ -101,7 +101,6 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         } else {
             context.res = successResponse;
         }
-        return;
     } catch {
         return handleGenericError(context);
     }

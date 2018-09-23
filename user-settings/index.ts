@@ -48,7 +48,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             status: 200,
             body: settings && settings.userSettings || DEFAULT_USER_SETTINGS,
         }
-        return context.done();
+        return;
     }
 
     try {
@@ -68,8 +68,6 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             status: 200,
             body: mergedSettings,
         }
-        return context.done();
-
     } catch {
         return handleGenericError(context, 'Unable to update settings');
     }

@@ -55,11 +55,8 @@ export async function run(context: Context) {
             context.log.warn(`Ignoring unknown event type: ${event && event!.object_type}`);
         }
     } catch (e) {
-        context.done();
         throw e;
     }
-
-    context.done();
 };
 
 const handleAthleteEvent = async (context: Context, event: AthleteEvent) => {
