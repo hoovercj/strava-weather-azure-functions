@@ -66,8 +66,6 @@ const verifySubscription = async (context: Context, req: HttpRequest) => {
         status: 200,
         body: echo,
     }
-
-    return context.done();
 }
 
 const processEvent = async (context: Context, req: HttpRequest) => {
@@ -77,5 +75,4 @@ const processEvent = async (context: Context, req: HttpRequest) => {
         status: 200,
         body: undefined,
     };
-    return context.done();
 }

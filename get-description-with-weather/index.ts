@@ -10,8 +10,13 @@ import * as Strava from '../shared/strava-api';
 import {
     speedToString,
     tempToString,
-    humidityToString,
+    percentToString,
     bearingToString,
+    pressureToString,
+    visibilityToString,
+    ozoneToString,
+    rainIntensityToString,
+    visibilityToSnowIntensityString,
 } from '../shared/utilities';
 import {
     handleGenericError,
@@ -22,6 +27,9 @@ import {
     ActivityId,
     PartitionKeys,
     WeatherUnits,
+    IUserSettings,
+    WeatherFieldSettings,
+    DEFAULT_USER_SETTINGS,
 } from '../shared/models';
 import { DataProvider } from '../shared/data-provider'
 
@@ -63,14 +71,14 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
 
         const dataProvider = new DataProvider();
         dataProvider.init();
-        const userSettings = await dataProvider.getUserSettings(activityDetails.athlete.id);
+        const userSettings = Object.assign(DEFAULT_USER_SETTINGS, await dataProvider.getUserSettings(activityDetails.athlete.id));
 
-        const description = getDescriptionWithWeatherForDetailedActivity(activityDetails, weatherDetails, userSettings && userSettings.weatherUnits);
+        const description = getDescriptionWithWeatherForDetailedActivity(activityDetails, weatherDetails, userSettings);
 
         const successResponse = {
             status: 200,
             body: description,
-        }
+        };
 
         // If the method is post, attempt to edit the description in strava
         // If successful, or if the method is get, return the description in the body
@@ -93,7 +101,6 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         } else {
             context.res = successResponse;
         }
-        return context.done();
     } catch {
         return handleGenericError(context);
     }
@@ -111,16 +118,12 @@ const postDescription = async (token: AuthToken, activityId: ActivityId, descrip
     }
 }
 
-const getDescriptionWithWeatherForDetailedActivity = (activityDetails: Strava.DetailedActivity, weatherDetails: WeatherSnapshot, units: WeatherUnits): string => {
+const getDescriptionWithWeatherForDetailedActivity = (activityDetails: Strava.DetailedActivity, weatherDetails: WeatherSnapshot, settings: IUserSettings): string => {
     if (!activityDetails || !weatherDetails) {
         return null;
     }
 
-    if (!units) {
-        units = WeatherUnits.Both;
-    }
-
-    const weatherDescription = getDescriptionFromWeather(weatherDetails, units);
+    const weatherDescription = getDescriptionFromWeather(weatherDetails, settings);
 
     // If the comment already contains the weather information, don't add it again
     if (activityDetails.description && activityDetails.description.indexOf("Weather Summary") >= 0) {
@@ -156,32 +159,122 @@ const getWeatherForDetailedActivity = async (run: Strava.DetailedActivity, apiKe
     return getWeatherSnapshot(options);
 }
 
-const getDescriptionFromWeather = (weather: WeatherSnapshot, units: WeatherUnits): string => {
+const getDescriptionFromWeather = (weather: WeatherSnapshot, settings: IUserSettings): string => {
     const strings = [];
-    strings.push(`Weather Summary: ${weather.summary}`);
-    strings.push(`Temperature: ${tempToString(weather.temperature, units)}`);
+    const { weatherUnits, weatherFields } = settings;
 
-    const heatIndexDiff = Math.abs(weather.apparentTemperature - weather.temperature);
-    if (heatIndexDiff > 10) {
-        strings.push(`Felt Like: ${tempToString(weather.apparentTemperature, units)}`);
+    if (weatherFields.summary) {
+        strings.push(`Weather Summary: ${weather.summary}`);
     }
 
-    strings.push(`Humidity: ${humidityToString(weather.humidity)}`);
-
-    if (weather.uvIndex >= 7) {
-        strings.push(`UV Index: ${weather.uvIndex}`);
+    if (weatherFields.temperature) {
+        strings.push(`Temperature: ${tempToString(weather.temperature, weatherUnits)}`);
     }
 
-    const windSpeedString = speedToString(weather.windSpeed, units);
-    const bearingString = weather.windBearing ? bearingToString(weather.windBearing) : '';
-    const windStringContent = `${bearingString} ${windSpeedString}`.trim();
-    strings.push(`Wind Speed: ${windStringContent}`);
+    if (weatherFields.apparentTemperature) {
+        const heatIndexDiff = Math.abs(weather.apparentTemperature - weather.temperature);
+        if (heatIndexDiff > 10) {
+            strings.push(`Felt Like: ${tempToString(weather.apparentTemperature, weatherUnits)}`);
+        }
+    }
 
-    // Does not have to be an absolute value
-    const windGustDiff = weather.windSpeed - weather.windGust;
-    if (windGustDiff > 5) {
-        strings.push(`Gusts up to: ${speedToString(weather.windGust, units)}`);
+    const precipitationString = getPrecipitationString(weather, weatherFields, weatherUnits);
+    if (precipitationString && precipitationString.length > 0) {
+        strings.push(`Precipitation: ${precipitationString}`);
+    }
+
+    if (weatherFields.uvIndex) {
+        if (weather.uvIndex >= 7) {
+            strings.push(`UV Index: ${weather.uvIndex}`);
+        }
+    }
+
+    if (weatherFields.humidity) {
+        strings.push(`Humidity: ${percentToString(weather.humidity)}`);
+    }
+
+    if (weatherFields.dewPoint) {
+        strings.push(`Dew Point: ${tempToString(weather.dewPoint, weatherUnits)}`);
+    }
+
+    const windStringContent = getWindSpeedAndDirectionString(weather, weatherFields, weatherUnits);
+    if (windStringContent.length > 0) {
+        strings.push(`Wind: ${windStringContent}`);
+    }
+
+    if (weatherFields.windGust) {
+        // Does not have to be an absolute value because only a positive value makes sense
+        // i.e. wind gusts less than the wind speed are silly
+        const windGustDiff = weather.windSpeed - weather.windGust;
+        if (windGustDiff > 5) {
+            strings.push(`Gusts up to: ${speedToString(weather.windGust, weatherUnits)}`);
+        }
+    }
+
+    if (weatherFields.pressure) {
+        strings.push(`Pressure: ${pressureToString(weather.pressure, weatherUnits)}`)
+    }
+
+    if (weatherFields.cloudCover) {
+        strings.push(`Cloud Cover: ${percentToString(weather.humidity)}`);
+    }
+
+    if (weatherFields.visibility) {
+        strings.push(`Visibility: ${visibilityToString(weather.visibility, weatherUnits)}`);
+    }
+
+    if (weatherFields.ozone) {
+        strings.push(`Ozone: ${ozoneToString(weather.ozone)} DB`);
     }
 
     return strings.join('\n');
+}
+
+const getPrecipitationString = (weather: WeatherSnapshot, weatherFields: WeatherFieldSettings, weatherUnits: WeatherUnits) => {
+    if (!weather.precipIntensity) {
+        return;
+    }
+
+    let precipIntensity: string;
+    switch (weather.precipType) {
+        case 'rain':
+        case 'sleet':
+            precipIntensity = rainIntensityToString(weather.precipIntensity);
+            break;
+        case 'snow':
+            precipIntensity = visibilityToSnowIntensityString(weather.visibility);
+            break;
+    }
+
+    let precipitationStringParts: string[] = [];
+
+    if (weatherFields.precipIntensity) {
+        precipitationStringParts.push(precipIntensity);
+    }
+
+    if (weatherFields.precipType) {
+        precipitationStringParts.push(weather.precipType);
+    }
+
+    if (weatherFields.precipProbability) {
+        if (weather.precipProbability) {
+            precipitationStringParts.push(`(${percentToString(weather.precipProbability)})`);
+        }
+    }
+
+    return precipitationStringParts.join(' ').trim();
+}
+
+const getWindSpeedAndDirectionString = (weather: WeatherSnapshot, weatherFields: WeatherFieldSettings, weatherUnits: WeatherUnits) => {
+    let windSpeedString: string;
+    let bearingString: string;
+    if (weatherFields.windSpeed) {
+        windSpeedString = speedToString(weather.windSpeed, weatherUnits);
+    }
+
+    if (weatherFields.windBearing) {
+        bearingString = weather.windBearing ? bearingToString(weather.windBearing) : '';
+    }
+
+    return `${bearingString} ${windSpeedString}`.trim();
 }

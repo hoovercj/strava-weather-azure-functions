@@ -19,7 +19,6 @@ export async function run(context: Context, req: HttpRequest) {
             status: 200,
             body: activities,
         };
-        return context.done();
     } catch {
         return handleGenericError(context);
     }

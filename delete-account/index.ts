@@ -73,7 +73,6 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         status: 200,
         body: '',
     };
-    return context.done();
 };
 
 const deleteEntities = async (dataProvider: DataProvider, ...entities: any[]): Promise<any> => {

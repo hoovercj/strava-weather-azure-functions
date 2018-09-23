@@ -45,7 +45,6 @@ export async function run(context: Context, req: HttpRequest) {
             status: 200,
             body: stravaResponse,
         };
-        return context.done();
     } catch {
         return handleGenericError(context);
     }

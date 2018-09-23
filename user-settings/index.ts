@@ -11,6 +11,7 @@ import {
     IUserSettings,
     UserSettingsModel,
     UserSettingsBindingEntity,
+    DEFAULT_USER_SETTINGS,
 } from '../shared/models';
 import { DataProvider } from '../shared/data-provider';
 
@@ -45,9 +46,9 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     if (context.req.method === HttpMethod.Get) {
         context.res = {
             status: 200,
-            body: settings && settings.userSettings,
+            body: settings && settings.userSettings || DEFAULT_USER_SETTINGS,
         }
-        return context.done();
+        return;
     }
 
     try {
@@ -67,8 +68,6 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             status: 200,
             body: mergedSettings,
         }
-        return context.done();
-
     } catch {
         return handleGenericError(context, 'Unable to update settings');
     }

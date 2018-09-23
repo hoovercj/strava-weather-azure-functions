@@ -9,8 +9,6 @@ export const handleMissingParameter = (context: Context, parameter: string): voi
         status: 400,
         body: message,
     }
-
-    context.done();
 }
 
 export const handleGenericError = (context: Context, message: string = ''): void => {
@@ -22,6 +20,4 @@ export const handleGenericError = (context: Context, message: string = ''): void
         status: 400,
         body: `Something went wrong. ${message}`.trim(),
     }
-
-    context.done();
 }
