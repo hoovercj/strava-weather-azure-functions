@@ -235,7 +235,7 @@ const getPrecipitationString = (weather: WeatherSnapshot, weatherFields: Weather
         return;
     }
 
-    let precipIntensity: string;
+    let precipIntensity: string = '';
     switch (weather.precipType) {
         case 'rain':
         case 'sleet':
@@ -266,8 +266,8 @@ const getPrecipitationString = (weather: WeatherSnapshot, weatherFields: Weather
 }
 
 const getWindSpeedAndDirectionString = (weather: WeatherSnapshot, weatherFields: WeatherFieldSettings, weatherUnits: WeatherUnits) => {
-    let windSpeedString: string;
-    let bearingString: string;
+    let windSpeedString: string = '';
+    let bearingString: string = '';
     if (weatherFields.windSpeed) {
         windSpeedString = speedToString(weather.windSpeed, weatherUnits);
     }
