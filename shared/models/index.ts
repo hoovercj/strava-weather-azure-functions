@@ -7,7 +7,9 @@ export type ActivityId = number;
 export type AuthToken = string;
 
 type WeatherSnapshotKeys = keyof WeatherSnapshot;
-export type WeatherFieldSettings = {[key in WeatherSnapshotKeys]?: boolean};
+export type WeatherFieldSettings = {
+    [key in WeatherSnapshotKeys | 'link']?: boolean;
+};
 
 export enum DistanceUnits {
     Miles = 'Miles',
@@ -43,6 +45,7 @@ export const DEFAULT_USER_SETTINGS: IUserSettings = {
         windBearing: true,
         windGust: true,
         windSpeed: true,
+        link: true,
     }
 }
 

@@ -1,4 +1,5 @@
 import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials';
+import deepmerge from 'deepmerge';
 
 import * as Strava from '../shared/strava-api';
 import {
@@ -46,7 +47,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     if (context.req.method === HttpMethod.Get) {
         context.res = {
             status: 200,
-            body: settings && settings.userSettings || DEFAULT_USER_SETTINGS,
+            body: deepmerge(DEFAULT_USER_SETTINGS, settings && settings.userSettings),
         }
         return;
     }
@@ -58,7 +59,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             return handleMissingParameter(context, 'settings');
         }
 
-        const mergedSettings: IUserSettings = Object.assign({}, settings && settings.userSettings, userSettings)
+        const mergedSettings = deepmerge(settings && settings.userSettings, userSettings);
 
         const storageService = new DataProvider();
         await storageService.init();

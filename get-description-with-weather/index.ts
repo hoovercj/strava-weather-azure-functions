@@ -1,23 +1,13 @@
 import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials';
-import { getDarkSkyApiKey } from '../shared/env';
+import deepmerge from 'deepmerge';
 
 import {
     WeatherSnapshot,
     DarkskyApiOptions,
     getWeatherSnapshot,
 } from '../shared/darksky-api';
-import * as Strava from '../shared/strava-api';
-import {
-    speedToString,
-    tempToString,
-    percentToString,
-    bearingToString,
-    pressureToString,
-    visibilityToString,
-    ozoneToString,
-    rainIntensityToString,
-    visibilityToSnowIntensityString,
-} from '../shared/utilities';
+import { DataProvider } from '../shared/data-provider'
+import { getDarkSkyApiKey } from '../shared/env';
 import {
     handleGenericError,
     handleMissingParameter,
@@ -30,8 +20,20 @@ import {
     IUserSettings,
     WeatherFieldSettings,
     DEFAULT_USER_SETTINGS,
+    UserId,
 } from '../shared/models';
-import { DataProvider } from '../shared/data-provider'
+import * as Strava from '../shared/strava-api';
+import {
+    speedToString,
+    tempToString,
+    percentToString,
+    bearingToString,
+    pressureToString,
+    visibilityToString,
+    ozoneToString,
+    rainIntensityToString,
+    visibilityToSnowIntensityString,
+} from '../shared/utilities';
 
 export const FUNCTION_NAME = 'description';
 
@@ -71,7 +73,9 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
 
         const dataProvider = new DataProvider();
         dataProvider.init();
-        const userSettings = Object.assign(DEFAULT_USER_SETTINGS, await dataProvider.getUserSettings(activityDetails.athlete.id));
+
+        const savedSettings = await dataProvider.getUserSettings(activityDetails.athlete.id);
+        const userSettings = deepmerge(DEFAULT_USER_SETTINGS, savedSettings);
 
         const description = getDescriptionWithWeatherForDetailedActivity(activityDetails, weatherDetails, userSettings);
 
@@ -225,6 +229,10 @@ const getDescriptionFromWeather = (weather: WeatherSnapshot, settings: IUserSett
 
     if (weatherFields.ozone) {
         strings.push(`Ozone: ${ozoneToString(weather.ozone)} DB`);
+    }
+
+    if (weatherFields.link) {
+        strings.push('www.stravaweather.net')
     }
 
     return strings.join('\n');

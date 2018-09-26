@@ -1,5 +1,4 @@
 import { WeatherUnits } from "../models";
-import { WeatherSnapshot } from "../darksky-api";
 
 export const tempToString = (degreesFarenhit: number, weatherUnits: WeatherUnits): string => {
     const imperial = `${getRoundedString(degreesFarenhit, 0)}°`;
