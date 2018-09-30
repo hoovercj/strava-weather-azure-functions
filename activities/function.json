@@ -14,6 +14,18 @@
       "type": "http",
       "direction": "out",
       "name": "res"
+    },
+    {
+      "name": "currentApiLimits",
+      "type": "blob",
+      "path": "api/limits",
+      "direction": "in"
+    },
+    {
+      "name": "newApiLimits",
+      "type": "blob",
+      "path": "api/limits",
+      "direction": "out"
     }
   ]
 }

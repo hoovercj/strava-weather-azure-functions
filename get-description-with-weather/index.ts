@@ -1,6 +1,7 @@
 import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials';
 import deepmerge from 'deepmerge';
 import * as http from 'http';
+import { RequestResponse } from 'request';
 
 import {
     WeatherSnapshot,
@@ -10,9 +11,12 @@ import {
 import { DataProvider } from '../shared/data-provider'
 import { getDarkSkyApiKey } from '../shared/env';
 import {
-    handleException,
+    handleError,
     handleMissingParameter,
     handleConfigurationError,
+    ApiStatus,
+    handleApiLimitError,
+    getNewApiLimits,
 } from '../shared/function-utilities';
 import {
     AuthToken,
@@ -38,12 +42,12 @@ import {
 } from '../shared/utilities';
 import { DetailedActivity } from '../shared/strava-api';
 
-interface PostActivityResult {
-    response: http.ClientResponse;
-    body: DetailedActivity;
-}
-
 export const FUNCTION_NAME = 'description';
+
+interface DetailedActivityResponse {
+    response: http.ClientResponse;
+    body: Strava.DetailedActivity;
+}
 
 export async function run(context: Context, req: HttpRequest): Promise<void> {
     const stravaToken = req.query.token || (req.body && req.body.token);
@@ -62,22 +66,62 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         return handleConfigurationError(context, 'DARK_SKY_API_KEY');
     }
 
+    // Check if the strava rate limit has already been hit before calling the API
+    const { currentApiLimits } = context.bindings;
+    let apiStatus = new ApiStatus(currentApiLimits);
+    if (apiStatus.stravaLimitReached) {
+        return handleApiLimitError(context, apiStatus, currentApiLimits);
+    }
+
+    let weatherSnapshot: WeatherSnapshot = context.bindings.activityWeather && JSON.parse(context.bindings.activityWeather.Weather);
+    if (!weatherSnapshot) {
+        // Before making strava api call, if the darksky api would need to be called,
+        // make sure its limit hasn't been reached
+        if (apiStatus.darkskyLimitReached) {
+            return handleApiLimitError(context, apiStatus, currentApiLimits);
+        }
+    }
+
     try {
         context.bindings.outTableBinding = [];
 
-        const activityDetails = await getDetailedActivityForId(stravaToken, activityId);
+        const activityResult = await getDetailedActivityForId(stravaToken, activityId)
+        const activityResponse = activityResult.response;
+        const activityDetails = activityResult.body;
 
-        let weatherDetails = context.bindings.activityWeather && JSON.parse(context.bindings.activityWeather.Weather);
-        if (!weatherDetails) {
-            weatherDetails = await getWeatherForDetailedActivity(activityDetails, darkSkyApiKey);
-            if (weatherDetails) {
+        let newApiLimits = getNewApiLimits(currentApiLimits, activityResponse)
+        context.bindings.newApiLimits = newApiLimits;
+
+        if (!activityDetails) {
+            // After calling the api, check that the request was not denied due to
+            // breaking the api limit
+            apiStatus = new ApiStatus(newApiLimits);
+            if (apiStatus.stravaLimitReached) {
+                return handleApiLimitError(context, apiStatus, newApiLimits);
+            }
+        }
+
+        if (!weatherSnapshot) {
+            const weatherResults = await getWeatherForDetailedActivity(activityDetails, darkSkyApiKey);
+            weatherSnapshot = weatherResults.body && weatherResults.body.currently;
+            newApiLimits = getNewApiLimits(newApiLimits, weatherResults)
+            context.bindings.newApiLimits = newApiLimits;
+
+            if (weatherSnapshot) {
                 context.bindings.outTableBinding.push({
                     PartitionKey: PartitionKeys.ActivityWeather,
                     RowKey: activityId,
-                    Weather: JSON.stringify(weatherDetails),
+                    Weather: JSON.stringify(weatherSnapshot),
                 });
             } else {
-                return handleActivityWithoutCoordinates(context, activityDetails);
+                // After calling the api, check that the request was not denied due to
+                // breaking the api limit
+                apiStatus = new ApiStatus(newApiLimits);
+                if (apiStatus.darkskyLimitReached) {
+                    return handleApiLimitError(context, apiStatus, newApiLimits);
+                }
+
+                return handleActivityWithoutWeather(context, activityDetails);
             }
         }
 
@@ -87,7 +131,14 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         const savedSettings = await dataProvider.getUserSettings(activityDetails.athlete.id);
         const userSettings = deepmerge(DEFAULT_USER_SETTINGS, savedSettings);
 
-        const description = getDescriptionWithWeatherForDetailedActivity(activityDetails, weatherDetails, userSettings);
+        const description = getDescriptionWithWeatherForDetailedActivity(activityDetails, weatherSnapshot, userSettings);
+
+        if (!description) {
+            apiStatus = new ApiStatus(currentApiLimits);
+            if (apiStatus.stravaLimitReached) {
+                return handleApiLimitError(context, apiStatus, currentApiLimits);
+            }
+        }
 
         const successResponse = {
             status: 200,
@@ -97,29 +148,49 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         // If the method is post, attempt to edit the description in strava
         // If successful, or if the method is get, return the description in the body
         if (req.method === HttpMethod.Post) {
-            await postDescription(stravaToken, activityId, description);
-            const alreadyProcessed = !!context.bindings.processedActivity;
-            if (!alreadyProcessed) {
-                context.bindings.outTableBinding.push({
-                    PartitionKey: PartitionKeys.ProcessedActivities,
-                    RowKey: activityId,
-                    UserId: activityDetails.athlete.id,
-                });
+            const postResult = await postDescription(stravaToken, activityId, description);
+            newApiLimits = getNewApiLimits(newApiLimits, postResult.response);
+
+            const postSuccess = postResult.response && postResult.response.statusCode === 200;
+
+            if (postSuccess) {
+                const alreadyProcessed = !!context.bindings.processedActivity;
+                if (!alreadyProcessed) {
+                    context.bindings.outTableBinding.push({
+                        PartitionKey: PartitionKeys.ProcessedActivities,
+                        RowKey: activityId,
+                        UserId: activityDetails.athlete.id,
+                    });
+                }
+            } else {
+                apiStatus = new ApiStatus(currentApiLimits);
+                if (apiStatus.stravaLimitReached) {
+                    return handleApiLimitError(context, apiStatus, currentApiLimits);
+                } else {
+                    // TODO: log why we were unable to update the description
+                    return handleError(context, 'Unable to update description');
+                }
             }
 
             context.res = successResponse;
-        } else {
-            context.res = successResponse;
         }
     } catch (error) {
-        return handleException(context, 'Error in get-description-with-weather', error);
+        return handleError(context, 'Error in get-description-with-weather', error);
     }
 };
 
-const postDescription = async (token: AuthToken, activityId: ActivityId, description: string): Promise<PostActivityResult> => {
+const postDescription = async (token: AuthToken, activityId: ActivityId, description: string): Promise<DetailedActivityResponse> => {
     const activitiesApi = new Strava.ActivitiesApi();
     activitiesApi.accessToken = token;
-    return activitiesApi.updateActivityById(activityId, { description });
+    try {
+        const response = await activitiesApi.updateActivityById(activityId, { description });
+        return response;
+    } catch (error) {
+        if (error.body && error.response) {
+            return error;
+        }
+        throw error;
+    }
 }
 
 const getDescriptionWithWeatherForDetailedActivity = (activityDetails: Strava.DetailedActivity, weatherDetails: WeatherSnapshot, settings: IUserSettings): string => {
@@ -139,15 +210,22 @@ const getDescriptionWithWeatherForDetailedActivity = (activityDetails: Strava.De
     return newComment;
 }
 
-const getDetailedActivityForId = async (token: AuthToken, id: ActivityId) => {
+const getDetailedActivityForId = async (token: AuthToken, id: ActivityId): Promise<DetailedActivityResponse> => {
     const activitiesApi = new Strava.ActivitiesApi();
     activitiesApi.accessToken = token;
-    const activityResponse = await activitiesApi.getActivityById(id)
-    return activityResponse
-        && activityResponse.body;
+    try {
+        const activityResponse = await activitiesApi.getActivityById(id)
+        return activityResponse;
+    } catch (error) {
+        if (error.response && error.body) {
+            return error;
+        }
+        // TODO: logging
+        throw error;
+    }
 }
 
-const getWeatherForDetailedActivity = async (activity: Strava.DetailedActivity, apiKey: AuthToken): Promise<WeatherSnapshot> => {
+const getWeatherForDetailedActivity = async (activity: Strava.DetailedActivity, apiKey: AuthToken): Promise<RequestResponse> => {
     if (!activity.startLatlng) {
         return null;
     }
@@ -286,7 +364,7 @@ const getWindSpeedAndDirectionString = (weather: WeatherSnapshot, weatherFields:
     return `${bearingString} ${windSpeedString}`.trim();
 }
 
-const handleActivityWithoutCoordinates = (context: Context, activity: DetailedActivity): void => {
+const handleActivityWithoutWeather = (context: Context, activity: DetailedActivity): void => {
     context.res = {
         status: 200,
         body: activity.description,

@@ -3,7 +3,7 @@ import deepmerge from 'deepmerge';
 
 import * as Strava from '../shared/strava-api';
 import {
-    handleException,
+    handleError,
     handleMissingParameter,
 } from '../shared/function-utilities';
 import {
@@ -70,6 +70,6 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             body: mergedSettings,
         }
     } catch (error) {
-        return handleException(context, 'Unable to update settings', error);
+        return handleError(context, 'Unable to update settings', error);
     }
 };

@@ -6,7 +6,7 @@ import {
     getStravaClientSecret
 } from '../shared/env';
 import {
-    handleException,
+    handleError,
     handleMissingParameter
 } from '../shared/function-utilities';
 import { DataProvider } from '../shared/data-provider';
@@ -46,7 +46,7 @@ export async function run(context: Context, req: HttpRequest) {
             body: stravaResponse,
         };
     } catch (error) {
-        return handleException(context, 'Error authorizing user', error);
+        return handleError(context, 'Error authorizing user', error);
     }
 };
 

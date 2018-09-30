@@ -26,6 +26,29 @@ export interface ErrorOrResponse {
     response: azure.ServiceResponse;
 }
 
+export class QueueService {
+    private static QUEUE_NAME = 'subscription-events';
+    private queue: azure.QueueService;
+
+    public async init() {
+        const credentials = process.env.AzureWebJobsStorage;
+        this.queue = azure.createQueueService(credentials);
+        return new Promise<ErrorResultResponse<azure.TableService.TableResult>>((resolve, reject) => {
+            this.queue.createQueueIfNotExists(QueueService.QUEUE_NAME, (error, result, response) => {
+                resolve({error, result, response});
+            });
+        });
+    }
+
+    public enqueueMessage = async (message: string | object, delayInSeconds?: number) => {
+        const messageContents = typeof message === 'string' ? message : JSON.stringify(message);
+
+        this.queue.createMessage(QueueService.QUEUE_NAME, messageContents, {
+            visibilityTimeout: delayInSeconds,
+        });
+    }
+}
+
 export class DataProvider {
 
     private static TABLE_NAME = 'StravaWeatherman';

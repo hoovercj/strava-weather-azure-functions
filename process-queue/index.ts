@@ -1,15 +1,14 @@
 import { Context } from 'azure-functions-ts-essentials';
 import * as request from 'request-promise-native';
+import { RequestResponse } from 'request';
+import { isNullOrUndefined } from 'util';
 
 import {
     getHostedUrl, getBackendCode,
 } from '../shared/env';
-import {
-    handleException,
-} from '../shared/function-utilities';
-import { isNullOrUndefined } from 'util';
-import { DataProvider } from '../shared/data-provider';
-import { UserId, AuthToken, ActivityId } from '../shared/models';
+import { ApiStatus } from '../shared/function-utilities';
+import { DataProvider, QueueService } from '../shared/data-provider';
+import { UserId, AuthToken, ActivityId, ApiLimits } from '../shared/models';
 
 import { FUNCTION_NAME as deleteAccountFunctionName } from '../delete-account';
 import { FUNCTION_NAME as getDescriptionFunctionName } from '../get-description-with-weather';
@@ -122,7 +121,10 @@ const handleActivityEvent = async (context: Context, event: ActivityEvent) => {
         context.log('Request: ' + baseUrl);
         const token = tokens[0];
         const url = `${baseUrl}?token=${token}&code=${getBackendCode()}`;
-        return request.post(url);
+        const result = await request.post(url, { resolveWithFullResponse: true, simple: false, json: true }) as RequestResponse;
+        if (result.body && result.body.apiLimits) {
+            requeueEvent(event, result.body.apiLimits);
+        }
     } else {
         context.log.error('Ignoring event because application found no valid tokens for user', userId);
     }
@@ -134,4 +136,12 @@ const isAthleteEvent = (event: SubscriptionEvent): event is AthleteEvent => {
 
 const isActivityEvent = (event: SubscriptionEvent): event is ActivityEvent => {
     return event.object_type === 'activity';
+}
+
+const requeueEvent = async (event: SubscriptionEvent, limits: ApiLimits) => {
+    const apiStatus = new ApiStatus(limits);
+
+    const queueService = new QueueService();
+    await queueService.init();
+    queueService.enqueueMessage(event, apiStatus.secondsUntilApisAvailable);
 }
