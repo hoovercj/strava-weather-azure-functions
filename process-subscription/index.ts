@@ -4,7 +4,7 @@ import {
     getStravaWebhooksVerifyToken,
 } from '../shared/env';
 import {
-    handleGenericError,
+    handleException, handleMissingParameter,
 } from '../shared/function-utilities';
 
 type AspectType = 'create' | 'update' | 'delete';
@@ -49,7 +49,7 @@ const verifySubscription = async (context: Context, req: HttpRequest) => {
     const challenge = req.query['hub.challenge'] || req.query.hub.challenge;
 
     if (verifyToken !== getStravaWebhooksVerifyToken()) {
-        return handleGenericError(context, `Verify token was incorrect.`);
+        return handleMissingParameter(context, 'hub.verify_token');
     }
 
     if (!challenge) {

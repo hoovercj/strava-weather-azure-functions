@@ -2,7 +2,7 @@ import { Context, HttpRequest } from 'azure-functions-ts-essentials';
 
 import * as Strava from '../shared/strava-api';
 import {
-    handleGenericError,
+    handleException,
     handleMissingParameter,
 } from '../shared/function-utilities';
 
@@ -19,8 +19,8 @@ export async function run(context: Context, req: HttpRequest) {
             status: 200,
             body: activities,
         };
-    } catch {
-        return handleGenericError(context);
+    } catch (error) {
+        return handleException(context, 'Error fetching activities', error);
     }
 };
 
@@ -28,12 +28,7 @@ const getActivitiesForToken = async (token) => {
     const activitiesApi = new Strava.ActivitiesApi();
     activitiesApi.accessToken = token;
 
-    try {
-        const activitiesResponse = await activitiesApi.getLoggedInAthleteActivities();
-        return activitiesResponse
-            && activitiesResponse.body;
-    } catch (error) {
-        // TODO: logging
-        throw error;
-    }
+    const activitiesResponse = await activitiesApi.getLoggedInAthleteActivities();
+    return activitiesResponse
+        && activitiesResponse.body;
 }

@@ -6,7 +6,7 @@ import {
     getStravaClientSecret,
 } from '../shared/env';
 import {
-    handleGenericError,
+    handleException,
 } from '../shared/function-utilities';
 
 export async function run(context: Context, req: HttpRequest) {
@@ -22,8 +22,7 @@ export async function run(context: Context, req: HttpRequest) {
             body: stravaResponse,
         };
     } catch (error) {
-        context.log.error(error);
-        return handleGenericError(context);
+        return handleException(context, 'Error deleting subscription', error);
     }
 };
 

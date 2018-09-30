@@ -1,6 +1,5 @@
 import { Context, HttpRequest } from 'azure-functions-ts-essentials';
 import {
-    handleGenericError,
     handleMissingParameter,
 } from '../shared/function-utilities';
 
@@ -25,7 +24,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     }
 
     if (!authorized) {
-        return handleGenericError(context, 'Must provide a valid auth token');
+        return handleMissingParameter(context, 'token');
     }
 
     const processedActivities = context.bindings.processedActivities && context.bindings.processedActivities.map(entity => {

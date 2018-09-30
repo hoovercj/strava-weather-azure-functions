@@ -34,11 +34,9 @@ export interface DarkskyApiOptions {
 
 export const getWeatherSnapshot = async (options: DarkskyApiOptions): Promise<WeatherSnapshot> => {
     // TODO: exclude all parts of response EXCEPT currently
+    // OR use the other parts of the response to find the range of weather for the activity
     const url = `https://api.darksky.net/forecast/${options.apiKey}/${options.latitude},${options.longitude},${Math.floor(Number(options.time) / 1000)}`;
-    // TODO: Ensure that cache is being used instead of this
-    console.log(url);
-    const response = await request.get(url)
-        .catch(console.error);
+    const response = await request.get(url);
 
     if (!response) {
         return;

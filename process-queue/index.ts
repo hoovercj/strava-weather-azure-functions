@@ -5,7 +5,7 @@ import {
     getHostedUrl, getBackendCode,
 } from '../shared/env';
 import {
-    handleGenericError,
+    handleException,
 } from '../shared/function-utilities';
 import { isNullOrUndefined } from 'util';
 import { DataProvider } from '../shared/data-provider';
@@ -46,7 +46,6 @@ export async function run(context: Context) {
     const event: SubscriptionEvent = context.bindings.queueItem;
 
     try {
-
         if (isAthleteEvent(event)) {
             await handleAthleteEvent(context, event);
         } else if (isActivityEvent(event)) {
@@ -54,8 +53,9 @@ export async function run(context: Context) {
         } else {
             context.log.warn(`Ignoring unknown event type: ${event && event!.object_type}`);
         }
-    } catch (e) {
-        throw e;
+    } catch (error) {
+        context.log.error('Error handling event', error);
+        throw error;
     }
 };
 
@@ -79,13 +79,13 @@ const handleAthleteEvent = async (context: Context, event: AthleteEvent) => {
                 const url = `${baseUrl}?token=${token}&code=${getBackendCode()}`;
                 return request.delete(url);
             } else {
-                context.log.error(`Ignoring event because application found no valid tokens for user ${userId}`);
+                context.log.error('Ignoring event because application found no valid tokens for user', userId);
             }
         } else {
-            context.log.warn(`Ignoring event because it was of an unknown form. Event.Updates.Authorized = ${event.updates && event.updates.authorized}`);
+            context.log.warn('Ignoring event because it was of an unknown form.', `Event.Updates.Authorized = ${event.updates && event.updates.authorized}`);
         }
     } else {
-        context.log.warn(`Ignoring event because it was of an unknown form. Event.Updates.Authorized = ${event.updates && event.updates.authorized}`);
+        context.log.warn('Ignoring event because it was of an unknown form.', `Event.Updates.Authorized = ${event.updates && event.updates.authorized}`);
     }
 }
 
@@ -124,7 +124,7 @@ const handleActivityEvent = async (context: Context, event: ActivityEvent) => {
         const url = `${baseUrl}?token=${token}&code=${getBackendCode()}`;
         return request.post(url);
     } else {
-        context.log.error(`Ignoring event because application found no valid tokens for user ${userId}`);
+        context.log.error('Ignoring event because application found no valid tokens for user', userId);
     }
 }
 

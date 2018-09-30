@@ -6,7 +6,7 @@ import {
     getStravaClientSecret
 } from '../shared/env';
 import {
-    handleGenericError,
+    handleException,
     handleMissingParameter
 } from '../shared/function-utilities';
 import { DataProvider } from '../shared/data-provider';
@@ -45,8 +45,8 @@ export async function run(context: Context, req: HttpRequest) {
             status: 200,
             body: stravaResponse,
         };
-    } catch {
-        return handleGenericError(context);
+    } catch (error) {
+        return handleException(context, 'Error authorizing user', error);
     }
 };
 
@@ -60,10 +60,5 @@ const exchangeCodeForToken = async (code) => {
 
     const url = getUrlWithParams(stravaBaseUrl, params);
 
-    try {
-        return request.post(url);
-    } catch (error) {
-        // TODO: logging
-        throw error;
-    }
+    return request.post(url);
 }

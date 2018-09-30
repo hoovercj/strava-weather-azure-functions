@@ -1,7 +1,7 @@
 import * as request from 'request-promise-native';
 import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials';
 import {
-    handleGenericError,
+    handleException,
     handleMissingParameter,
 } from '../shared/function-utilities';
 import {
@@ -33,7 +33,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     }
 
     if (!authorized) {
-        return handleGenericError(context, 'Must provide a valid auth token');
+        return handleMissingParameter(context, 'token');
     }
 
     context.log(`Deauthorizing user ${userId}...`);
@@ -41,17 +41,17 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     try {
         await request.post(deauthorizeUrl);
         context.log('User deauthorized');
-    } catch (e) {
-        context.log.error(`Problem deauthorizing user. User may have already been deauthorized.`);
+    } catch (error) {
+        context.log.error(`Problem deauthorizing user. User may have already been deauthorized.`, userId, error);
     }
 
     const dataProvider = new DataProvider();
     dataProvider.init();
 
     context.log(`Deleting ${tokenEntities && tokenEntities.length} tokens...`);
-    await deleteEntities(dataProvider, tokenEntities);
+    await deleteEntities(context, dataProvider, tokenEntities);
     context.log(`Deleting user settings...`);
-    await deleteEntities(dataProvider, context.bindings.userSettings);
+    await deleteEntities(context, dataProvider, context.bindings.userSettings);
 
     const processedActivityEntities = context.bindings.processedActivities as ProcessedActivityBindingEntity[] || [];
     context.log(`Deleting ${processedActivityEntities && processedActivityEntities.length} processed activities...`)
@@ -61,9 +61,9 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         const activityModel = ProcessedActivityModel.fromBindingEntity(activityEntity);
         try {
             const weatherEntity = await dataProvider.getWeatherForActivityId(activityModel.activityId);
-            await deleteEntities(dataProvider, weatherEntity, activityEntity);
-        } catch {
-            // TODO: logging
+            await deleteEntities(context, dataProvider, weatherEntity, activityEntity);
+        } catch (error) {
+            context.log.error('Error deleting activity and weather info for activity', activityModel.activityId, error)
         }
     }
 
@@ -75,15 +75,15 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     };
 };
 
-const deleteEntities = async (dataProvider: DataProvider, ...entities: any[]): Promise<any> => {
+const deleteEntities = async (context: Context, dataProvider: DataProvider, ...entities: any[]): Promise<any> => {
     let entity: any;
     for (let i = 0; i < entities.length; i++) {
         entity = entities[i];
         if (entity) {
             try {
                 await dataProvider.deleteEntity(entities[i]);
-            } catch {
-                // TODO: logging
+            } catch (error) {
+                context.log.error('Error deleting entity', error)
             }
         }
     }

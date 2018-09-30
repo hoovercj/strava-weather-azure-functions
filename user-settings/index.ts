@@ -3,7 +3,7 @@ import deepmerge from 'deepmerge';
 
 import * as Strava from '../shared/strava-api';
 import {
-    handleGenericError,
+    handleException,
     handleMissingParameter,
 } from '../shared/function-utilities';
 import {
@@ -38,7 +38,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     }
 
     if (!authorized) {
-        return handleGenericError(context, 'Must provide a valid auth token');
+        return handleMissingParameter(context, 'token');
     }
 
     const settingsEntity: UserSettingsBindingEntity = context.bindings.userSettings;
@@ -69,32 +69,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             status: 200,
             body: mergedSettings,
         }
-    } catch {
-        return handleGenericError(context, 'Unable to update settings');
+    } catch (error) {
+        return handleException(context, 'Unable to update settings', error);
     }
 };
-
-const postDescription = async (token: AuthToken, activityId: ActivityId, description: string): Promise<boolean> => {
-    const activitiesApi = new Strava.ActivitiesApi();
-    activitiesApi.accessToken = token;
-    try {
-        const response = await activitiesApi.updateActivityById(activityId, { description });
-        return response.response.statusCode === 200;
-    } catch (error) {
-        // TODO: logging
-        return false;
-    }
-}
-
-const getDetailedActivityForId = async (token: AuthToken, id: ActivityId) => {
-    const activitiesApi = new Strava.ActivitiesApi();
-    activitiesApi.accessToken = token;
-    try {
-        const activityResponse = await activitiesApi.getActivityById(id)
-        return activityResponse
-            && activityResponse.body;
-    } catch (error) {
-        // TODO: logging
-        throw error;
-    }
-}

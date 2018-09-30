@@ -1,5 +1,6 @@
 import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials';
 import deepmerge from 'deepmerge';
+import * as http from 'http';
 
 import {
     WeatherSnapshot,
@@ -9,8 +10,9 @@ import {
 import { DataProvider } from '../shared/data-provider'
 import { getDarkSkyApiKey } from '../shared/env';
 import {
-    handleGenericError,
+    handleException,
     handleMissingParameter,
+    handleConfigurationError,
 } from '../shared/function-utilities';
 import {
     AuthToken,
@@ -34,6 +36,12 @@ import {
     rainIntensityToString,
     visibilityToSnowIntensityString,
 } from '../shared/utilities';
+import { DetailedActivity } from '../shared/strava-api';
+
+interface PostActivityResult {
+    response: http.ClientResponse;
+    body: DetailedActivity;
+}
 
 export const FUNCTION_NAME = 'description';
 
@@ -51,7 +59,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     }
 
     if (!darkSkyApiKey) {
-        return handleGenericError(context);
+        return handleConfigurationError(context, 'DARK_SKY_API_KEY');
     }
 
     try {
@@ -87,39 +95,29 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
         // If the method is post, attempt to edit the description in strava
         // If successful, or if the method is get, return the description in the body
         if (req.method === HttpMethod.Post) {
-            const success = await postDescription(stravaToken, activityId, description);
-            if (success) {
-                const alreadyProcessed = !!context.bindings.processedActivity;
-                if (!alreadyProcessed) {
-                    context.bindings.outTableBinding.push({
-                        PartitionKey: PartitionKeys.ProcessedActivities,
-                        RowKey: activityId,
-                        UserId: activityDetails.athlete.id,
-                    });
-                }
-
-                context.res = successResponse;
-            } else {
-                return handleGenericError(context, 'Unable to update description');
+            await postDescription(stravaToken, activityId, description);
+            const alreadyProcessed = !!context.bindings.processedActivity;
+            if (!alreadyProcessed) {
+                context.bindings.outTableBinding.push({
+                    PartitionKey: PartitionKeys.ProcessedActivities,
+                    RowKey: activityId,
+                    UserId: activityDetails.athlete.id,
+                });
             }
+
+            context.res = successResponse;
         } else {
             context.res = successResponse;
         }
-    } catch {
-        return handleGenericError(context);
+    } catch (error) {
+        return handleException(context, 'Error in get-description-with-weather', error);
     }
 };
 
-const postDescription = async (token: AuthToken, activityId: ActivityId, description: string): Promise<boolean> => {
+const postDescription = async (token: AuthToken, activityId: ActivityId, description: string): Promise<PostActivityResult> => {
     const activitiesApi = new Strava.ActivitiesApi();
     activitiesApi.accessToken = token;
-    try {
-        const response = await activitiesApi.updateActivityById(activityId, { description });
-        return response.response.statusCode === 200;
-    } catch (error) {
-        // TODO: logging
-        return false;
-    }
+    return activitiesApi.updateActivityById(activityId, { description });
 }
 
 const getDescriptionWithWeatherForDetailedActivity = (activityDetails: Strava.DetailedActivity, weatherDetails: WeatherSnapshot, settings: IUserSettings): string => {
@@ -142,14 +140,9 @@ const getDescriptionWithWeatherForDetailedActivity = (activityDetails: Strava.De
 const getDetailedActivityForId = async (token: AuthToken, id: ActivityId) => {
     const activitiesApi = new Strava.ActivitiesApi();
     activitiesApi.accessToken = token;
-    try {
-        const activityResponse = await activitiesApi.getActivityById(id)
-        return activityResponse
-            && activityResponse.body;
-    } catch (error) {
-        // TODO: logging
-        throw error;
-    }
+    const activityResponse = await activitiesApi.getActivityById(id)
+    return activityResponse
+        && activityResponse.body;
 }
 
 const getWeatherForDetailedActivity = async (run: Strava.DetailedActivity, apiKey: AuthToken): Promise<WeatherSnapshot> => {
