@@ -7,7 +7,7 @@ import {
     getStravaWebhooksVerifyToken,
 } from '../shared/env';
 import {
-    handleException,
+    handleError,
 } from '../shared/function-utilities';
 import * as request from 'request-promise-native';
 
@@ -20,7 +20,7 @@ export async function run(context: Context, req: HttpRequest) {
             body: stravaResponse,
         };
     } catch (error) {
-        return handleException(context, 'Error creating subscription', error);
+        return handleError(context, 'Error creating subscription', error);
     }
 };
 

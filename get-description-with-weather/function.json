@@ -38,6 +38,18 @@
       "name": "outTableBinding",
       "type": "table",
       "direction": "out"
+    },
+    {
+      "name": "currentApiLimits",
+      "type": "blob",
+      "path": "api/limits",
+      "direction": "in"
+    },
+    {
+      "name": "newApiLimits",
+      "type": "blob",
+      "path": "api/limits",
+      "direction": "out"
     }
   ]
 }

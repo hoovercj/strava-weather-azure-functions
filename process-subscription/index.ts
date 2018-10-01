@@ -3,9 +3,7 @@ import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials'
 import {
     getStravaWebhooksVerifyToken,
 } from '../shared/env';
-import {
-    handleException, handleMissingParameter,
-} from '../shared/function-utilities';
+import { handleMissingParameter } from '../shared/function-utilities';
 
 type AspectType = 'create' | 'update' | 'delete';
 

@@ -1,6 +1,26 @@
 import { Context } from 'azure-functions-ts-essentials';
-import { ProcessedActivityBindingEntity } from '../models';
+import * as Url from 'url';
+
+import { ApiLimits } from '../models';
 import { EnvironmentVariable } from '../env';
+import { ApiStatus } from './api-status';
+
+export * from './api-status';
+
+const proxyRequests = function () {
+    const proxy = {
+        protocol: "http:",
+        hostname: "127.0.0.1",
+        port: 8888,
+    };
+
+    var proxyUrl = Url.format(proxy);
+    process.env.http_proxy = proxyUrl;
+    process.env.https_proxy = proxyUrl;
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
+proxyRequests();
 
 export const handleMissingParameter = (context: Context, parameter: string): void => {
     const messageRoot = 'Missing or invalid required parameter';
@@ -26,7 +46,7 @@ export const handleConfigurationError = (context: Context, configurationKey: Env
     }
 }
 
-export const handleException = (context: Context, message: string, error: any): void => {
+export const handleError = (context: Context, message: string, error?: any): void => {
     if (message) {
         context.log.error(message, error);
     }
@@ -34,5 +54,19 @@ export const handleException = (context: Context, message: string, error: any): 
     context.res = {
         status: 400,
         body: `Something went wrong. ${message}`.trim(),
+    }
+}
+
+export interface ApiLimitBody {
+    apiLimits: ApiLimits,
+}
+
+export const handleApiLimitError = (context: Context, apiStatus: ApiStatus, apiLimits: ApiLimits): void => {
+    if (apiStatus.limitReached)
+    context.res = {
+        status: 429,
+        body: {
+            apiLimits,
+        } as ApiLimitBody
     }
 }

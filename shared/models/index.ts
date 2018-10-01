@@ -2,6 +2,18 @@ import { ActivityId, AuthToken, UserId } from '../models';
 import { TableUtilities } from 'azure-storage';
 import { WeatherSnapshot } from '../darksky-api';
 
+export interface ApiLimits {
+    stravaShortLimit?: number;
+    stravaShortUsage?: number;
+    stravaShortReset?: number;
+    stravaDailyLimit?: number;
+    stravaDailyUsage?: number;
+    stravaDailyReset?: number;
+    darkskyLimit?: number;
+    darkskyUsage?: number;
+    darkSkyReset?: number;
+}
+
 export type UserId = number;
 export type ActivityId = number;
 export type AuthToken = string;

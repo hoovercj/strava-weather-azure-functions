@@ -1,9 +1,6 @@
 import * as request from 'request-promise-native';
 import { Context, HttpRequest, HttpMethod } from 'azure-functions-ts-essentials';
-import {
-    handleException,
-    handleMissingParameter,
-} from '../shared/function-utilities';
+import { handleMissingParameter } from '../shared/function-utilities';
 import {
     ProcessedActivityModel,
     ProcessedActivityBindingEntity,
