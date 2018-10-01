@@ -65,7 +65,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     try {
         context.bindings.outTableBinding = [];
 
-        const activityDetails = await getDetailedActivityForId(stravaToken, activityId)
+        const activityDetails = await getDetailedActivityForId(stravaToken, activityId);
 
         let weatherDetails = context.bindings.activityWeather && JSON.parse(context.bindings.activityWeather.Weather);
         if (!weatherDetails) {
@@ -76,6 +76,8 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
                     RowKey: activityId,
                     Weather: JSON.stringify(weatherDetails),
                 });
+            } else {
+                return handleActivityWithoutCoordinates(context, activityDetails);
             }
         }
 
@@ -145,12 +147,16 @@ const getDetailedActivityForId = async (token: AuthToken, id: ActivityId) => {
         && activityResponse.body;
 }
 
-const getWeatherForDetailedActivity = async (run: Strava.DetailedActivity, apiKey: AuthToken): Promise<WeatherSnapshot> => {
+const getWeatherForDetailedActivity = async (activity: Strava.DetailedActivity, apiKey: AuthToken): Promise<WeatherSnapshot> => {
+    if (!activity.startLatlng) {
+        return null;
+    }
+
     const options: DarkskyApiOptions = {
         apiKey: apiKey,
-        latitude: String(run.startLatlng[0]),
-        longitude: String(run.startLatlng[1]),
-        time: run.startDate,
+        latitude: String(activity.startLatlng[0]),
+        longitude: String(activity.startLatlng[1]),
+        time: activity.startDate,
     }
 
     return getWeatherSnapshot(options);
@@ -278,4 +284,11 @@ const getWindSpeedAndDirectionString = (weather: WeatherSnapshot, weatherFields:
     }
 
     return `${bearingString} ${windSpeedString}`.trim();
+}
+
+const handleActivityWithoutCoordinates = (context: Context, activity: DetailedActivity): void => {
+    context.res = {
+        status: 200,
+        body: activity.description,
+    }
 }
