@@ -16,7 +16,7 @@ export const tempToString = (degreesFarenhit: number, weatherUnits: WeatherUnits
 
 export const speedToString = (mph: number, weatherUnits: WeatherUnits): string => {
     const imperial = `${getRoundedString(mph, 0)} mph`;
-    const metric = `${getRoundedString(mph * 0.44704, 0)} m/s`;
+    const metric = `${getRoundedString(mph * 1.60934, 0)} km/h`;
 
     switch (weatherUnits) {
         case WeatherUnits.Imperial:
