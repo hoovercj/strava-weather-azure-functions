@@ -45,9 +45,12 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
     const settings: UserSettingsModel | undefined = settingsEntity ? UserSettingsModel.fromBindingEntity(settingsEntity) : undefined;
 
     if (context.req.method === HttpMethod.Get) {
+        const userSettings = settings && settings.userSettings;
         context.res = {
             status: 200,
-            body: deepmerge(DEFAULT_USER_SETTINGS, settings && settings.userSettings),
+            body: userSettings
+                ? deepmerge(DEFAULT_USER_SETTINGS, userSettings)
+                : DEFAULT_USER_SETTINGS,
         }
         return;
     }
@@ -59,7 +62,7 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
             return handleMissingParameter(context, 'settings');
         }
 
-        const mergedSettings = deepmerge(settings && settings.userSettings, userSettings);
+        const mergedSettings = deepmerge(settings && settings.userSettings || {}, userSettings || {});
 
         const storageService = new DataProvider();
         await storageService.init();

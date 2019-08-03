@@ -27,6 +27,7 @@ export interface IUserSettings {
     weatherUnits: WeatherUnits;
     autoUpdate: boolean;
     weatherFields: WeatherFieldSettings;
+    ignoreVirtualActivities: boolean;
 }
 
 export const DEFAULT_USER_SETTINGS: IUserSettings = {
@@ -46,7 +47,8 @@ export const DEFAULT_USER_SETTINGS: IUserSettings = {
         windGust: true,
         windSpeed: true,
         link: true,
-    }
+    },
+    ignoreVirtualActivities: false,
 }
 
 export enum PartitionKeys {

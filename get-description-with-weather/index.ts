@@ -22,7 +22,6 @@ import {
     IUserSettings,
     WeatherFieldSettings,
     DEFAULT_USER_SETTINGS,
-    UserId,
 } from '../shared/models';
 import * as Strava from '../shared/strava-api';
 import {
@@ -35,6 +34,7 @@ import {
     ozoneToString,
     rainIntensityToString,
     visibilityToSnowIntensityString,
+    isVirutalActivity,
 } from '../shared/utilities';
 import { DetailedActivity } from '../shared/strava-api';
 
@@ -67,6 +67,20 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
 
         const activityDetails = await getDetailedActivityForId(stravaToken, activityId);
 
+        const dataProvider = new DataProvider();
+        dataProvider.init();
+
+        const savedSettings = await dataProvider.getUserSettings(activityDetails.athlete.id);
+        const userSettings = savedSettings
+            ? deepmerge(DEFAULT_USER_SETTINGS, savedSettings)
+            : DEFAULT_USER_SETTINGS;
+
+        const ignoreVirtualActivity = userSettings.ignoreVirtualActivities && isVirutalActivity(activityDetails);
+
+        if (ignoreVirtualActivity) {
+            return handleIgnoredActivity(context, activityDetails);
+        }
+
         let weatherDetails = context.bindings.activityWeather && JSON.parse(context.bindings.activityWeather.Weather);
         if (!weatherDetails) {
             weatherDetails = await getWeatherForDetailedActivity(activityDetails, darkSkyApiKey);
@@ -77,15 +91,9 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
                     Weather: JSON.stringify(weatherDetails),
                 });
             } else {
-                return handleActivityWithoutCoordinates(context, activityDetails);
+                return handleIgnoredActivity(context, activityDetails);
             }
         }
-
-        const dataProvider = new DataProvider();
-        dataProvider.init();
-
-        const savedSettings = await dataProvider.getUserSettings(activityDetails.athlete.id);
-        const userSettings = deepmerge(DEFAULT_USER_SETTINGS, savedSettings);
 
         const description = getDescriptionWithWeatherForDetailedActivity(activityDetails, weatherDetails, userSettings);
 
@@ -106,11 +114,9 @@ export async function run(context: Context, req: HttpRequest): Promise<void> {
                     UserId: activityDetails.athlete.id,
                 });
             }
-
-            context.res = successResponse;
-        } else {
-            context.res = successResponse;
         }
+
+        context.res = successResponse;
     } catch (error) {
         return handleException(context, 'Error in get-description-with-weather', error);
     }
@@ -286,7 +292,7 @@ const getWindSpeedAndDirectionString = (weather: WeatherSnapshot, weatherFields:
     return `${bearingString} ${windSpeedString}`.trim();
 }
 
-const handleActivityWithoutCoordinates = (context: Context, activity: DetailedActivity): void => {
+const handleIgnoredActivity = (context: Context, activity: DetailedActivity): void => {
     context.res = {
         status: 200,
         body: activity.description,

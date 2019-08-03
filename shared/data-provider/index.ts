@@ -137,7 +137,6 @@ export class DataProvider {
         let result = await new Promise<ErrorResultResponse<azure.TableService.QueryEntitiesResult<T>>>((resolve, reject) => {
 
             this.storage.queryEntities<T>(DataProvider.TABLE_NAME, query, continuationToken, null, (error, result, response) => {
-                console.log(`Query Entities Reults:\n${JSON.stringify(result.entries)}`);
                 resolve({error, result, response});
             });
         });
